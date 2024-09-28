@@ -3,6 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:valais_roll/src/login/login_page.dart';
+import 'package:valais_roll/src/test_page.dart';
+import 'package:valais_roll/src/widgets/nav_bar.dart';
+import 'package:valais_roll/src/widgets/top_bar.dart'; 
 import 'firebase_options.dart';
 
 void main() async {
@@ -24,6 +27,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      debugShowCheckedModeBanner: false, 
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
@@ -40,6 +44,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  bool _isNavBarEnabled = true;
 
   void _incrementCounter() {
     setState(() {
@@ -56,7 +61,6 @@ class _MyHomePageState extends State<MyHomePage> {
         'uid': user.uid,
       });
     } else {
-      // Handle the case when the user is not authenticated
       print('User is not authenticated');
     }
   }
@@ -68,13 +72,23 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _navigateToTestPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TestPage()),
+    );
+  }
+
+  void _toggleNavBar() {
+    setState(() {
+      _isNavBarEnabled = !_isNavBarEnabled;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
+      appBar: TopBar(title: widget.title), 
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -96,6 +110,11 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _navigateToLoginPage,
               child: const Text('Go to Login Page'),
             ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _navigateToTestPage,
+              child: const Text('Go to Test Page'),
+            ),
           ],
         ),
       ),
@@ -104,6 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ),
+      bottomNavigationBar: BottomNavBar(isEnabled: _isNavBarEnabled), 
     );
   }
 }
