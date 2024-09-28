@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "84261668365",
+    "project_id": "valaisroll",
+    "storage_bucket": "valaisroll.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:84261668365:android:e2c4869c35a6fbfcb37744",
+        "android_client_info": {
+          "package_name": "ch.vsroll"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAm_GFsVKbwlZkZEEFIchgDhcPGViuWHcA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
