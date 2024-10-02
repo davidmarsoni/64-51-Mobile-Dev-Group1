@@ -7,7 +7,6 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const BasePage(
-      title: 'ValaisRoll',
       body: Padding(
         padding: EdgeInsets.all(20.0), 
         child: Column(
@@ -15,14 +14,13 @@ class MyHomePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start, 
           children: [
             Text(
-              'Welcome to ValaisRoll!',
+              'Home page',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
           ],
         ),
       ),
-      isBottomNavBarEnabled: false,
     );
   }
 }

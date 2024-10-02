@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:valais_roll/src/auth/create_account/create_account_page.dart';
 import 'package:valais_roll/src/services/auth_service.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/widgets/button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,6 +21,7 @@ class _LoginPageState extends State<LoginPage> {
 
   User? _currentUser;
   bool _passwordVisible = false;
+  String? passwordError;
 
   @override
   void initState() {
@@ -65,6 +68,16 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  String? _validatePassword(String value) {
+    if (value.isEmpty) {
+      return 'Please enter your password';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters long';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BasePage(
@@ -73,23 +86,42 @@ class _LoginPageState extends State<LoginPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start, 
+          crossAxisAlignment: CrossAxisAlignment.start, 
           children: [
-            // Section to display the current user
-            if (_currentUser != null)
-              Text('Current User: ${_currentUser!.email}',
+             if(_currentUser != null) ...[
+                   const SizedBox(height: 20),
+                   Text('You are already logged as: ${_currentUser!.email}',
                   style: const TextStyle(fontSize: 18)),
-            if (_currentUser == null)
+                  const SizedBox(height: 8), 
+                   Align(
+                     alignment: Alignment.centerLeft,
+                     child: Button(
+                       onPressed: _logout,
+                       text:'Logout',
+                       isFilled: false,
+                     ),
+                   ),
+             ],
+            if (_currentUser == null) ...[
               const Text('No user connected', style: TextStyle(fontSize: 18)),
             const SizedBox(height: 20),
             Form(
               key: _formKey,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, 
                 children: [
                   TextFormField(
                     controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue),
+                      ),
+                    ),
                     keyboardType: TextInputType.emailAddress,
+                    autofillHints: [AutofillHints.email],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
@@ -105,11 +137,14 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _passwordController,
                     decoration: InputDecoration(
                       labelText: 'Password',
+                      errorText: passwordError,
+                      border: const OutlineInputBorder(),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue),
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _passwordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                          _passwordVisible ? Icons.visibility : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() {
@@ -128,26 +163,55 @@ class _LoginPageState extends State<LoginPage> {
                       }
                       return null;
                     },
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _loginWithEmail,
-                    child: const Text('Login with Email'),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const CreateAccountPage()),
-                      );
+                    onChanged: (value) {
+                      if (_passwordController.text.isNotEmpty) {
+                        setState(() {
+                          passwordError = _validatePassword(value);
+                        });
+                      }
                     },
-                    child: const Text('Create Account'),
                   ),
+                   Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: RichText(
+                      textAlign: TextAlign.left, 
+                      text: TextSpan(
+                        text: "If you don't have an account yet, please create your account ",
+                        style: const TextStyle(color: Colors.black, fontSize: 14),
+                        children: [
+                          TextSpan(
+                            text: 'here',
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const CreateAccountPage(),
+                                  ),
+                                );
+                              },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Button(
+                     
+                      onPressed: _loginWithEmail,
+                      text:'Login',
+                    ),
+                  ),   
                 ],
               ),
             ),
+            ],
           ],
         ),
       ),
