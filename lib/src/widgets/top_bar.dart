@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:valais_roll/src/auth/login/login_page.dart';
+import 'package:valais_roll/src/others/privacy_policy_page.dart'; // Import the Privacy Policy page
 
 class TopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
-  const TopBar({super.key, required this.title});
+  const TopBar({super.key, this.title = 'ValaisRoll'});
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +56,12 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
           icon: const Icon(Icons.more_vert),
           tooltip: 'More options',
           onSelected: (String result) {
-            // Handle more options
-            // Implement your logic here
+            if (result == 'privacy') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()),
+              );
+            }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
             const PopupMenuItem<String>(

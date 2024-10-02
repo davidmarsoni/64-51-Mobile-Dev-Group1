@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:valais_roll/src/auth/create_account/create_account_page.dart';
 import 'package:valais_roll/src/auth/login/login_page.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/widgets/button.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -12,10 +13,10 @@ class WelcomePage extends StatelessWidget {
     return BasePage(
       title: 'ValaisRoll',
       body: Padding(
-        padding: const EdgeInsets.all(20.0), // Add 20px padding outside the main frame
+        padding: const EdgeInsets.all(20.0), 
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start, // Align content to the top
-          crossAxisAlignment: CrossAxisAlignment.start, // Align content to the start horizontally
+          mainAxisAlignment: MainAxisAlignment.start, 
+          crossAxisAlignment: CrossAxisAlignment.start, 
           children: [
             const Text(
               'Welcome to ValaisRoll!',
@@ -25,35 +26,29 @@ class WelcomePage extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0), // Increase button height
-                      textStyle: const TextStyle(fontSize: 18), // Increase font size
-                    ),
+                  child: Button(
+                    text: 'Create Account',
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const CreateAccountPage()),
                       );
                     },
-                    child: const Text('Get started now'),
+                    isFilled: true, 
                   ),
                 ),
                 const SizedBox(width: 10),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0), // Add left and right padding
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 40.0), // Increase button height and width
-                      textStyle: const TextStyle(fontSize: 18), // Increase font size
-                    ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0), 
+                  child: Button(
+                    text: 'Login',
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const LoginPage()),
                       );
                     },
-                    child: const Text('Login'),
+                    isFilled: false, // This is an outlined button
                   ),
                 ),
               ],
@@ -66,7 +61,7 @@ class WelcomePage extends StatelessWidget {
             const SizedBox(height: 20),
             SvgPicture.asset(
               'assets/svg/welcome.svg', 
-              height: MediaQuery.of(context).size.height * 0.75, // 75% of the screen height
+              height: MediaQuery.of(context).size.height * 0.75,
             ),
           ],
         ),

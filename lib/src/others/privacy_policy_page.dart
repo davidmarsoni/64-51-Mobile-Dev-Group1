@@ -7,7 +7,6 @@ class PrivacyPolicyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: 'Test Page',
       body: Center(
         child: Text(
           'The privacy policy page is under construction',

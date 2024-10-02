@@ -8,7 +8,7 @@ class BasePage extends StatelessWidget {
   final bool isBottomNavBarEnabled;
 
   const BasePage({
-    required this.title,
+    this.title = 'ValaisRoll', 
     required this.body,
     this.isBottomNavBarEnabled = true,
     super.key,

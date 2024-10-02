@@ -1,37 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/test_page.dart';
-import 'package:valais_roll/src/widgets/nav_bar.dart';
-import 'package:valais_roll/src/widgets/top_bar.dart';
+import 'package:valais_roll/src/widgets/base_page.dart';
 
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const TopBar(title: "Home page"), // Use TopBar component
-      body: Center(
+    return const BasePage(
+      title: 'ValaisRoll',
+      body: Padding(
+        padding: EdgeInsets.all(20.0), 
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start, 
+          crossAxisAlignment: CrossAxisAlignment.start, 
           children: [
             Text(
-              'Hello World',
-              style: Theme.of(context).textTheme.headlineMedium,
+              'Welcome to ValaisRoll!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TestPage()),
-                );
-              },
-              child: const Text('Go to Test Page'),
-            ),
+            SizedBox(height: 20),
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(isEnabled: true), // Use BottomNavBar component
+      isBottomNavBarEnabled: false,
     );
   }
 }
