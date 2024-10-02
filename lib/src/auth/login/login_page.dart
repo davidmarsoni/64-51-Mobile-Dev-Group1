@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:valais_roll/src/login/create_account_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:valais_roll/src/auth/create_account/create_account_page.dart';
+import 'package:valais_roll/src/services/auth_service.dart';
+import 'package:valais_roll/src/widgets/base_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,7 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
 
   User? _currentUser;
   bool _passwordVisible = false;
@@ -21,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _currentUser = _auth.currentUser;
+    _currentUser = _authService.currentUser;
   }
 
   @override
@@ -34,40 +36,18 @@ class _LoginPageState extends State<LoginPage> {
   void _loginWithEmail() async {
     if (_formKey.currentState!.validate()) {
       try {
-        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-          email: _emailController.text,
-          password: _passwordController.text,
+        User? user = await _authService.loginWithEmail(
+          _emailController.text,
+          _passwordController.text,
         );
         setState(() {
-          _currentUser = userCredential.user;
+          _currentUser = user;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login successful')),
         );
       } on FirebaseAuthException catch (e) {
-        String message;
-        switch (e.code) {
-          case 'invalid-credential':
-            message = 'The email or password is invalid.';
-            break;
-          case 'user-disabled':
-            message = 'The user account has been disabled.';
-            break;
-          case 'user-not-found':
-            message = 'No user found for that email.';
-            break;
-          case 'wrong-password':
-            message = 'Wrong password provided.';
-            break;
-          case 'too-many-requests':
-            message = 'Too many requests. Try again later.';
-            break;
-          case 'operation-not-allowed':
-            message = 'Email/password accounts are not enabled.';
-            break;
-          default:
-            message = e.code;
-        }
+        String message = _authService.getErrorMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
@@ -76,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _logout() async {
-    await _auth.signOut();
+    await _authService.logout();
     setState(() {
       _currentUser = null;
     });
@@ -87,8 +67,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login Page')),
+    return BasePage(
+      title: 'Login Page',
+      isBottomNavBarEnabled: false,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -167,23 +148,6 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
             ),
-            if (_currentUser != null)
-              Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0),
-                    child: Text(
-                      'You are logged in as ${_currentUser!.email}',
-                      style: const TextStyle(color: Colors.green, fontSize: 16),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _logout,
-                    child: const Text('Logout'),
-                  ),
-                ],
-              ),
           ],
         ),
       ),
