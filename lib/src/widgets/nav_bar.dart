@@ -4,7 +4,7 @@ import 'package:valais_roll/src/others/emergency_support_page.dart'; // Import t
 class BottomNavBar extends StatefulWidget {
   final bool isEnabled;
 
-  const BottomNavBar({Key? key, required this.isEnabled}) : super(key: key);
+  const BottomNavBar({super.key, required this.isEnabled});
 
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
