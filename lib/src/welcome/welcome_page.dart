@@ -34,6 +34,7 @@ class WelcomePage extends StatelessWidget {
                         MaterialPageRoute(builder: (context) => const CreateAccountPage()),
                       );
                     },
+                    horizontalPadding: 20,
                     isFilled: true, 
                   ),
                 ),
