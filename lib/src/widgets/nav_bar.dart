@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:valais_roll/src/others/emergency_support_page.dart'; // Import the emergency support page
 
 class BottomNavBar extends StatefulWidget {
   final bool isEnabled;
@@ -21,6 +22,17 @@ class _BottomNavBarState extends State<BottomNavBar> {
           setState(() {
             _currentIndex = index;
           });
+
+          // Handle navigation based on selected index
+          if (index == 2) {
+            // Navigate to Emergency Support page if index is 2
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const EmergencySupportPage()),
+            );
+          }
+          // Add more navigation logic for other pages here if needed
         }
       },
       destinations: <NavigationDestination>[
