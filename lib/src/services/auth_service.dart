@@ -278,7 +278,7 @@ class AuthService {
               onPressed: () async {
                 try {
                   AuthCredential credential = EmailAuthProvider.credential(
-                    email: email!,
+                    email: email,
                     password: passwordController.text,
                   );
                   await _auth.currentUser?.reauthenticateWithCredential(credential);
