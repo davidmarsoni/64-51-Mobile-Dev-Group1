@@ -7,6 +7,7 @@ import 'package:valais_roll/src/services/auth_service.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 import '../../widgets/nav_bar.dart';
 import '../../widgets/top_bar.dart';
+import 'package:intl/intl.dart';  
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
@@ -35,85 +36,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   };
 
   bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
   bool _acceptPrivacyPolicy = false;
-  String? passwordError;
-  String? confirmPasswordError;
+  final Map<String, String?> _errors = {};
 
-  String? _validateField(String value, String fieldType) {
-    if (value.isEmpty) return 'This field cannot be empty.';
-    
-    // Email validation
-    if (fieldType == 'email' && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-      return 'Please enter a valid email address.';
-    }
-    
-    // Phone validation (only digits)
-    if (fieldType == 'phone' && !RegExp(r'^\d+$').hasMatch(value)) {
-      return 'Please enter a valid phone number.';
-    }
-
-    // NPA validation (only digits)
-    if (fieldType == 'npa' && !RegExp(r'^\d+$').hasMatch(value)) {
-      return 'Please enter a valid NPA.';
-    }
-
-    // Number validation (only digits)
-    if (fieldType == 'number' && !RegExp(r'^\d+$').hasMatch(value)) {
-      return 'Please enter a valid road number.';
-    }
-    
-    // Password validation
-    if (fieldType == 'password') {
-      if (value.length < 8) return 'Password must be at least 8 characters long.';
-      if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Password must contain at least one uppercase letter.';
-      if (!RegExp(r'[a-z]').hasMatch(value)) return 'Password must contain at least one lowercase letter.';
-      if (!RegExp(r'[0-9]').hasMatch(value)) return 'Password must contain at least one digit.';
-      if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) return 'Password must contain at least one special character.';
-    }
-
-    // Confirm password validation
-    if (fieldType == 'confirmPassword' && value != _controllers['password']!.text) {
-      return 'Passwords do not match.';
-    }
-
-    // Name, surname, and username validation
-    if (['name', 'surname', 'username'].contains(fieldType) && value.length < 2) {
-      return 'This field must be at least 2 characters long.';
-    }
-
-    // Birthdate validation (simple format check)
-    if (fieldType == 'birthDate' && !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
-      return 'Please enter a valid birth date (YYYY-MM-DD).';
-    }
-
-    // Address validation (not empty)
-    if (fieldType == 'address' && value.isEmpty) {
-      return 'Address cannot be empty.';
-    }
-
-    // Locality validation
-    if (fieldType == 'locality' && value.isEmpty) {
-      return 'Locality cannot be empty.';
-    }
-
-    return null;
-  }
-
-
-  void _selectBirthDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        _controllers['birthDate']!.text = "${pickedDate.toLocal()}".split(' ')[0];  // Formatting the date as YYYY-MM-DD
-      });
-    }
-  }
+  
 
   Widget _buildBirthDateField() {
     return TextFormField(
@@ -126,8 +53,22 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       onTap: () {
         _selectBirthDate(context);  // Open date picker on tap
       },
-      validator: (value) => _validateField(value!, 'birthDate'),
+      validator: (value) => _authService.validateField(value!, 'birthDate'),
     );
+  }
+
+  Future<void> _selectBirthDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      final DateFormat formatter = DateFormat('dd.MM.yyyy');
+      final String formatted = formatter.format(picked);
+      _controllers['birthDate']?.text = formatted;
+    }
   }
 
   List<Widget> _buildPasswordCriteria(String password) {
@@ -151,14 +92,21 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     );
   }
 
-  void _createAccount() async {
+    void _createAccount() async {
     setState(() {
-      // Validate confirm password and password
-      confirmPasswordError = _validateField(_controllers['confirmPassword']!.text, 'confirmPassword');
-      passwordError = _validateField(_controllers['password']!.text, 'password');
+      // Validate all fields
+      _errors.clear();
+      _controllers.forEach((key, controller) {
+        _errors[key] = _authService.validateField(controller.text, key);
+      });
+  
+      // Check if passwords match
+      if (_controllers['password']!.text != _controllers['confirmPassword']!.text) {
+        _errors['confirmPassword'] = 'Passwords do not match';
+      }
     });
-
-    if (!_formKey.currentState!.validate() || passwordError != null || confirmPasswordError != null || !_acceptPrivacyPolicy) {
+  
+    if (!_formKey.currentState!.validate() || _errors.values.any((error) => error != null) || !_acceptPrivacyPolicy) {
       if (!_acceptPrivacyPolicy) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('You must accept the privacy policy to continue.')),
@@ -166,10 +114,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       }
       return;
     }
-
+  
     try {
       // Create the AppUser object with form data
       AppUser newUser = AppUser(
+        uid: '', // Placeholder, will be set after account creation
         email: _controllers['email']!.text,
         name: _controllers['name']!.text,
         surname: _controllers['surname']!.text,
@@ -181,20 +130,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         npa: _controllers['npa']!.text,
         locality: _controllers['locality']!.text,
       );
-
+  
       // Check if a user already exists with this address
       bool userExists = await _authService.checkUserByAddress(newUser.address, newUser.number, newUser.npa);
-
+  
       if (userExists) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('A user already exists with this address.')),
         );
         return;
       }
-
+  
       // Create the account
       User? user = await _authService.createAccountWithEmail(newUser.email, _controllers['password']!.text);
-
+  
       if (user != null) {
         // Send email verification
         if (!user.emailVerified) {
@@ -203,12 +152,27 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             const SnackBar(content: Text('Verification email sent. Please check your email.')),
           );
         }
-
+  
+        // Set the UID in the AppUser object
+        newUser = AppUser(
+          uid: user.uid,
+          email: newUser.email,
+          name: newUser.name,
+          surname: newUser.surname,
+          phone: newUser.phone,
+          birthDate: newUser.birthDate,
+          username: newUser.username,
+          address: newUser.address,
+          number: newUser.number,
+          npa: newUser.npa,
+          locality: newUser.locality,
+        );
+  
         // Add the user to Firestore
         await _authService.addUserToFirestore(user, newUser);
-
+  
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully! Please verify your email.')),
+          const SnackBar(content: Text('Account created successfully!, you are now logged in.')),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -223,30 +187,37 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     }
   }
 
-  Widget _buildTextField(String label, String controllerKey, {bool obscureText = false, TextInputType keyboardType = TextInputType.text, String? errorText}) {
+  Widget _buildTextField(String label, String controllerKey, {bool obscureText = false, TextInputType keyboardType = TextInputType.text, Iterable<String>? autofillHints}) {
     return TextFormField(
       controller: _controllers[controllerKey],
       decoration: InputDecoration(
         labelText: label,
-        errorText: errorText,
+        errorText: _errors[controllerKey],
         border: const OutlineInputBorder(),
         suffixIcon: obscureText
             ? IconButton(
-                icon: Icon(_passwordVisible ? Icons.visibility : Icons.visibility_off),
+                icon: Icon(controllerKey == 'password' ? (_passwordVisible ? Icons.visibility : Icons.visibility_off) : (_confirmPasswordVisible ? Icons.visibility : Icons.visibility_off)),
                 onPressed: () {
                   setState(() {
-                    _passwordVisible = !_passwordVisible;
+                    if (controllerKey == 'password') {
+                      _passwordVisible = !_passwordVisible;
+                    } else {
+                      _confirmPasswordVisible = !_confirmPasswordVisible;
+                    }
                   });
                 },
               )
             : null,
       ),
-      obscureText: obscureText && !_passwordVisible,
+      obscureText: obscureText && (controllerKey == 'password' ? !_passwordVisible : !_confirmPasswordVisible),
       keyboardType: keyboardType,
-      validator: (value) => _validateField(value!, controllerKey),
+      validator: (value) => _authService.validateField(value!, controllerKey),
       onChanged: (value) {
-        setState(() {});
+        setState(() {
+          _errors[controllerKey] = _authService.validateField(value, controllerKey);
+        });
       },
+      autofillHints: autofillHints,
     );
   }
 
@@ -280,7 +251,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 // Avatar Section
                 const Text('Avatar and Username', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                _buildTextField('Username', 'username'),
+                _buildTextField('Username', 'username', autofillHints: [AutofillHints.username]),
                 const SizedBox(height: 10),
                 ElevatedButton(onPressed: () {}, child: const Text('Upload Avatar Picture')),
                 const SizedBox(height: 20),
@@ -320,11 +291,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 // Account Section
                 const Text('Account Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                _buildTextField('Email', 'email', keyboardType: TextInputType.emailAddress),
+                _buildTextField('Email', 'email', keyboardType: TextInputType.emailAddress, autofillHints: [AutofillHints.email]),
                 const SizedBox(height: 16),
-                _buildTextField('Password', 'password', obscureText: true, errorText: passwordError),
+                _buildTextField('Password', 'password', obscureText: true, autofillHints: [AutofillHints.newPassword]),
                 const SizedBox(height: 16),
-                _buildTextField('Confirm Password', 'confirmPassword', obscureText: true, errorText: confirmPasswordError),
+                _buildTextField('Confirm Password', 'confirmPassword', obscureText: true, autofillHints: [AutofillHints.newPassword]),
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: _buildPasswordCriteria(_controllers['password']!.text)),

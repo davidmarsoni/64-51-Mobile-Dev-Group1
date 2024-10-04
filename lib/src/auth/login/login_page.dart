@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:valais_roll/src/auth/create_account/create_account_page.dart';
 import 'package:valais_roll/src/services/auth_service.dart';
+import 'package:valais_roll/src/welcome/welcome_page.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 
@@ -66,6 +67,11 @@ class _LoginPageState extends State<LoginPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Logout successful')),
     );
+    // Redirect to welcome page
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => WelcomePage()),
+      (Route<dynamic> route) => false,
+    );
   }
 
   String? _validatePassword(String value) {
@@ -121,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     keyboardType: TextInputType.emailAddress,
-                    autofillHints: [AutofillHints.email],
+                    autofillHints: const [AutofillHints.email],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';

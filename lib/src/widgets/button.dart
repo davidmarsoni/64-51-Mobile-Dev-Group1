@@ -6,20 +6,22 @@ class Button extends StatelessWidget {
   final bool isFilled;
   final double? horizontalPadding;
   final double? verticalPadding;
+  final Color? color; // Make color optional
 
   const Button({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isFilled = true,
     this.horizontalPadding,
     this.verticalPadding,
-  }) : super(key: key);
+    this.color, // Make color optional
+  });
 
   @override
   Widget build(BuildContext context) {
-    final double defaultHorizontalPadding = 40.0;
-    final double defaultVerticalPadding = 16.0;
+    const double defaultHorizontalPadding = 40.0;
+    const double defaultVerticalPadding = 16.0;
 
     return isFilled
         ? FilledButton(
@@ -29,6 +31,7 @@ class Button extends StatelessWidget {
                 horizontal: horizontalPadding ?? defaultHorizontalPadding,
               ),
               textStyle: const TextStyle(fontSize: 18),
+              backgroundColor: color, // Use the optional color
             ),
             onPressed: onPressed,
             child: Text(text),
@@ -40,6 +43,7 @@ class Button extends StatelessWidget {
                 horizontal: horizontalPadding ?? defaultHorizontalPadding,
               ),
               textStyle: const TextStyle(fontSize: 18),
+              side: color != null ? BorderSide(color: color!) : null, // Use the optional color
             ),
             onPressed: onPressed,
             child: Text(text),

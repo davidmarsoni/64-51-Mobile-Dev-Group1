@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:valais_roll/src/account/account_page.dart';
 import 'package:valais_roll/src/auth/login/login_page.dart';
 import 'package:valais_roll/src/others/privacy_policy_page.dart'; // Import the Privacy Policy page
 
@@ -35,12 +37,19 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton(
           icon: const Icon(Icons.account_circle),
-          onPressed: () {
-            // Navigate to the account page
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginPage()),
-            );
+          onPressed: () async {
+            User? user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AccountPage()),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            }
           },
           tooltip: 'Account',
         ),
