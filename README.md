@@ -1,16 +1,21 @@
 # valais_roll
 
-A new Flutter project.
+A bike renting app for the Valais region in Switzerland.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Setup the google api key
 
-A few resources to get you started if this is your first Flutter project:
+1. copy the file `env.example` to `.env` and replace the value of `GOOGLE_MAPS_API_KEY` with your own google api key.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```env
+GOOGLE_MAPS_API_KEY=your_google_api_key
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+2. create a file name `secrets.xml` in the `android/app/src/main/res/values/` directory and add the following content: 
+
+```xml
+<resources>
+    <string name="google_api_key">your_google_maps_api_key</string>
+</resources>
+```

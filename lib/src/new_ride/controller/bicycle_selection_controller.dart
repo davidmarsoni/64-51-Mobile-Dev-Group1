@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart'; 
 import 'package:http/http.dart' as http;
@@ -17,7 +18,7 @@ class BicycleSelectionController {
 
   // Function to get distance and duration using Google Directions API
   Future<void> getRouteInfo() async {
-    String apiKey = "GOOGLEAPIKEY";  
+    String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
 
     // Build the URL for the Google Directions API
     String url =
@@ -47,7 +48,7 @@ class BicycleSelectionController {
 
   // Function to draw the route (polyline) between start and destination
   Future<void> getPolyline() async {
-    String apiKey = "GOOGLEAPIKEY"; 
+    String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
 
     // Initialize PolylinePoints
     PolylinePoints polylinePoints = PolylinePoints();

@@ -67,70 +67,70 @@ class _ItineraryPageState extends State<ItineraryPage> {
 
   // Search either city or station and zoom to the location
   Future<void> _performSearch(bool isStart) async {
-  String query = isStart ? _startController.text : _destinationController.text;
+    String query = isStart ? _startController.text : _destinationController.text;
 
-  if (query.isNotEmpty) {
-    // Convert query to lowercase and trim spaces to match station names
-    String normalizedQuery = query.toLowerCase().trim();
+    if (query.isNotEmpty) {
+      // Convert query to lowercase and trim spaces to match station names
+      String normalizedQuery = query.toLowerCase().trim();
 
-    // Check if the input matches a station name
-    if (_itineraryController.stationNames.contains(normalizedQuery)) {
-      // Find the corresponding station marker by name
-      Marker? matchingMarker = _itineraryController.markers.firstWhere(
-        (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == normalizedQuery,
-        orElse: () => Marker(markerId: MarkerId('default')),
-      );
+      // Check if the input matches a station name
+      if (_itineraryController.stationNames.contains(normalizedQuery)) {
+        // Find the corresponding station marker by name
+        Marker? matchingMarker = _itineraryController.markers.firstWhere(
+          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == normalizedQuery,
+          orElse: () => Marker(markerId: MarkerId('default')),
+        );
 
-      // Set the corresponding LatLng based on whether it's the start or destination
-      setState(() {
-        if (isStart) {
-          _startLatLng = matchingMarker.position;
-        } else {
-          _destinationLatLng = matchingMarker.position;
-        }
-      });
-
-      // Zoom to the location on the map
-      final GoogleMapController controller = await _mapController.future;
-      controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(target: matchingMarker.position, zoom: 12.0),
-      ));
-
-      // Check if both start and destination are valid stations
-      _checkIfBothLocationsAreStations();
-      return; // Stop further execution as it's a valid station
-        }
-
-    // If the query is not a station, try geocoding the input as a city name
-    try {
-      List<Location> locations = await locationFromAddress(query);
-      if (locations.isNotEmpty) {
-        LatLng latLng = LatLng(locations.first.latitude, locations.first.longitude);
-
-        // Move the map camera to the city location
-        final GoogleMapController controller = await _mapController.future;
-        controller.animateCamera(CameraUpdate.newCameraPosition(
-          CameraPosition(target: latLng, zoom: 12.0),
-        ));
-
-        // Set the LatLng as start or destination depending on the input
+        // Set the corresponding LatLng based on whether it's the start or destination
         setState(() {
           if (isStart) {
-            _startLatLng = latLng; // Set start location to city coordinates
+            _startLatLng = matchingMarker.position;
           } else {
-            _destinationLatLng = latLng; // Set destination location to city coordinates
+            _destinationLatLng = matchingMarker.position;
           }
         });
 
-        // Check if both start and destination have valid LatLngs
+        // Zoom to the location on the map
+        final GoogleMapController controller = await _mapController.future;
+        controller.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(target: matchingMarker.position, zoom: 12.0),
+        ));
+
+        // Check if both start and destination are valid stations
         _checkIfBothLocationsAreStations();
+        return; // Stop further execution as it's a valid station
       }
-    } catch (e) {
-      // Show error message if geocoding fails
-      _showErrorMessage("Location not found: $query");
+
+      // If the query is not a station, try geocoding the input as a city name
+      try {
+        List<Location> locations = await locationFromAddress(query);
+        if (locations.isNotEmpty) {
+          LatLng latLng = LatLng(locations.first.latitude, locations.first.longitude);
+
+          // Move the map camera to the city location
+          final GoogleMapController controller = await _mapController.future;
+          controller.animateCamera(CameraUpdate.newCameraPosition(
+            CameraPosition(target: latLng, zoom: 12.0),
+          ));
+
+          // Set the LatLng as start or destination depending on the input
+          setState(() {
+            if (isStart) {
+              _startLatLng = latLng; // Set start location to city coordinates
+            } else {
+              _destinationLatLng = latLng; // Set destination location to city coordinates
+            }
+          });
+
+          // Check if both start and destination have valid LatLngs
+          _checkIfBothLocationsAreStations();
+        }
+      } catch (e) {
+        // Show error message if geocoding fails
+        _showErrorMessage("Location not found: $query");
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +162,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     polylines: Set<Polyline>.of(_itineraryController.polylines.values),
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
+                    mapType: MapType.normal, // Ensure mapType is set
                   ),
           ),
 
@@ -254,37 +255,35 @@ class _ItineraryPageState extends State<ItineraryPage> {
 
   // Check if both the start and destination are valid stations and show the button
   void _checkIfBothLocationsAreStations() {
-  setState(() {
-    // Ensure both the input and station names are lowercased and trimmed
-    String startInput = _startController.text.toLowerCase().trim();
-    String destinationInput = _destinationController.text.toLowerCase().trim();
+    setState(() {
+      // Ensure both the input and station names are lowercased and trimmed
+      String startInput = _startController.text.toLowerCase().trim();
+      String destinationInput = _destinationController.text.toLowerCase().trim();
 
-    bool startIsValid = _itineraryController.stationNames.contains(startInput);
-    bool destinationIsValid = _itineraryController.stationNames.contains(destinationInput);
+      bool startIsValid = _itineraryController.stationNames.contains(startInput);
+      bool destinationIsValid = _itineraryController.stationNames.contains(destinationInput);
 
-    // If start or destination is valid, update their respective LatLngs
-    if (startIsValid) {
-      Marker? matchingStartMarker = _itineraryController.markers.firstWhere(
-        (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == startInput,
-        orElse: () => Marker(markerId: MarkerId('default')),
-      );
-      _startLatLng = matchingStartMarker.position;
-        }
+      // If start or destination is valid, update their respective LatLngs
+      if (startIsValid) {
+        Marker? matchingStartMarker = _itineraryController.markers.firstWhere(
+          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == startInput,
+          orElse: () => Marker(markerId: MarkerId('default')),
+        );
+        _startLatLng = matchingStartMarker.position;
+      }
 
-    if (destinationIsValid) {
-      Marker? matchingDestinationMarker = _itineraryController.markers.firstWhere(
-        (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == destinationInput,
-        orElse: () => Marker(markerId: MarkerId('default')),
-      );
-      _destinationLatLng = matchingDestinationMarker.position;
-        }
+      if (destinationIsValid) {
+        Marker? matchingDestinationMarker = _itineraryController.markers.firstWhere(
+          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == destinationInput,
+          orElse: () => Marker(markerId: MarkerId('default')),
+        );
+        _destinationLatLng = matchingDestinationMarker.position;
+      }
 
-    // Show button only if both fields contain valid station names and coordinates
-    showButton = startIsValid && destinationIsValid && _startLatLng != null && _destinationLatLng != null;
-  });
-}
-
-
+      // Show button only if both fields contain valid station names and coordinates
+      showButton = startIsValid && destinationIsValid && _startLatLng != null && _destinationLatLng != null;
+    });
+  }
 
   // Show error messages
   void _showErrorMessage(String message) {
