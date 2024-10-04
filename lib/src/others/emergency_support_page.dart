@@ -38,10 +38,7 @@ class EmergencySupportPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    String userLocation =
-        "123 Main St, Springfield"; // Replace with the actual location
-
+  Widget build(BuildContext context) {y
     return BasePage(
       body: Padding(
         padding: const EdgeInsets.all(16),
