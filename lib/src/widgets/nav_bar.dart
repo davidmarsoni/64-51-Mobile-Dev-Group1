@@ -1,49 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:valais_roll/src/new_ride/view/itinary_view.dart';
 
 class BottomNavBar extends StatefulWidget {
   final bool isEnabled;
 
-  const BottomNavBar({Key? key, required this.isEnabled}) : super(key: key);
+  const BottomNavBar({super.key, required this.isEnabled});
 
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int _currentIndex = 0;
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 1) { // Assuming the "New ride" button is at index 1
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ItineraryPage()),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: _currentIndex,
-      onDestinationSelected: (int index) {
-        if (widget.isEnabled) {
-          setState(() {
-            _currentIndex = index;
-          });
-        }
-      },
-      destinations: <NavigationDestination>[
-        NavigationDestination(
+    return BottomNavigationBar(
+      currentIndex: _selectedIndex,
+      onTap: _onItemTapped,
+      items: <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
           icon: Icon(
-            Icons.directions_bike,
+            Icons.home,
             color: widget.isEnabled ? null : Colors.grey,
           ),
-          label: 'Your ride',
+          label: 'Home',
         ),
-        NavigationDestination(
+        BottomNavigationBarItem(
           icon: Icon(
             Icons.search,
             color: widget.isEnabled ? null : Colors.grey,
           ),
           label: 'New ride',
         ),
-        NavigationDestination(
+        BottomNavigationBarItem(
           icon: Icon(
-            Icons.notifications,
+            Icons.person,
             color: widget.isEnabled ? null : Colors.grey,
           ),
-          label: 'Emergency Support',
+          label: 'Profile',
         ),
       ],
     );

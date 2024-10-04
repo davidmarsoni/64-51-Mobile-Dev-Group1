@@ -3,7 +3,7 @@ import 'package:valais_roll/src/widgets/top_bar.dart';
 import 'package:valais_roll/src/widgets/nav_bar.dart'; 
 
 class TestPage extends StatelessWidget {
-  const TestPage({Key? key}) : super(key: key);
+  const TestPage({super.key});
 
   @override
   Widget build(BuildContext context) {
