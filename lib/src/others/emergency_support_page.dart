@@ -38,7 +38,7 @@ class EmergencySupportPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {y
+  Widget build(BuildContext context) {
     return BasePage(
       body: Padding(
         padding: const EdgeInsets.all(16),
