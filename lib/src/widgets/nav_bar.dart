@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:valais_roll/src/new_ride/view/itinary_view.dart';
+import 'package:valais_roll/src/others/emergency_support_page.dart'; // Import the emergency support page
 
 class BottomNavBar extends StatefulWidget {
   final bool isEnabled;
