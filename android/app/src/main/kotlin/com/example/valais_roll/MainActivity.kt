@@ -1,4 +1,4 @@
-package com.example.valais_roll
+package ch.vsroll
 
 import io.flutter.embedding.android.FlutterActivity
 

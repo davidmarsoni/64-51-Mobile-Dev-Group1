@@ -1,58 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:valais_roll/src/new_ride/view/itinary_view.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:valais_roll/src/others/emergency_support_page.dart'; // Import the emergency support page
 
 class BottomNavBar extends StatefulWidget {
   final bool isEnabled;
 
-  const BottomNavBar({super.key, required this.isEnabled});
+  const BottomNavBar({
+    super.key,
+    required this.isEnabled,
+  });
 
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int _selectedIndex = 0;
+  int _currentIndex = 0;
+  User? _currentUser;
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (index == 1) { // Assuming the "New ride" button is at index 1
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ItineraryPage()),
-      );
-    }
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
   }
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onItemTapped,
-      items: <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
+    bool navBarEnabled = _currentUser != null && widget.isEnabled;
+
+    return NavigationBar(
+      selectedIndex: _currentIndex,
+      onDestinationSelected: (int index) {
+        if (navBarEnabled) {
+          setState(() {
+            _currentIndex = index;
+          });
+          if(index == 1){
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const ItineraryPage()),
+            );
+          }
+
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const EmergencySupportPage()),
+            );
+          }
+        }
+      },
+      destinations: <NavigationDestination>[
+        NavigationDestination(
           icon: Icon(
-            Icons.home,
-            color: widget.isEnabled ? null : Colors.grey,
+            Icons.directions_bike,
+            color: navBarEnabled ? null : Colors.grey,
           ),
           label: 'Home',
         ),
-        BottomNavigationBarItem(
+        NavigationDestination(
           icon: Icon(
             Icons.search,
-            color: widget.isEnabled ? null : Colors.grey,
+            color: navBarEnabled ? null : Colors.grey,
           ),
           label: 'New ride',
         ),
-        BottomNavigationBarItem(
+        NavigationDestination(
           icon: Icon(
-            Icons.person,
-            color: widget.isEnabled ? null : Colors.grey,
+            Icons.notifications,
+            color: navBarEnabled ? null : Colors.grey,
           ),
-          label: 'Profile',
+          label: 'Emmergency Support',
         ),
       ],
     );

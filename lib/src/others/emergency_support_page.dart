@@ -1,8 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:valais_roll/src/widgets/base_page.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:valais_roll/src/widgets/top_bar.dart';
-import 'package:valais_roll/src/widgets/nav_bar.dart';
 
 class EmergencySupportPage extends StatelessWidget {
   const EmergencySupportPage({super.key});
@@ -40,29 +39,26 @@ class EmergencySupportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String userLocation =
-        "123 Main St, Springfield"; // Replace with the actual location
-
-    return Scaffold(
-      appBar: TopBar(
-        title: 'Emergency Support',
-      ),
+    return BasePage(
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Text indicating emergency situation
+            // New title
+            const Text(
+              'Emergency Support',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8), // Space between titles
             const Text(
               'Are you in emergency?',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
             ),
             const SizedBox(height: 10), // Space between texts
             const Text(
               'Press the button depending on your emergency',
               style: TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20), // Space before the buttons
 
@@ -142,7 +138,7 @@ class EmergencySupportPage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(isEnabled: true),
+      isBottomNavBarEnabled: true,
     );
   }
 }

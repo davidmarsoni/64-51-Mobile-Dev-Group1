@@ -1,69 +1,88 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:valais_roll/src/account/account_page.dart';
+import 'package:valais_roll/src/auth/login/login_page.dart';
+import 'package:valais_roll/src/others/privacy_policy_page.dart'; // Import the Privacy Policy page
 
 class TopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
-  const TopBar({
-    super.key,
-    required this.title,
-  });
+  const TopBar({super.key, this.title = 'ValaisRoll'});
 
   @override
   Widget build(BuildContext context) {
+    bool canPop = Navigator.canPop(context);
+
     return AppBar(
-      backgroundColor: Theme.of(context).colorScheme.surface, 
-      surfaceTintColor: Theme.of(context).colorScheme.surface, 
-      toolbarHeight: 100, 
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.account_circle),
-                    onPressed: () {
-                      // code here 
-                    },
-                    tooltip: 'Account',
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.notifications_outlined),
-                    onPressed: () {
-                      // code here 
-                    },
-                    tooltip: 'Notifications',
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.more_vert),
-                    onPressed: () {
-                      // code here 
-                    },
-                    tooltip: 'More options',
-                  ),
-                ],
-              ),
-            ],
+          SvgPicture.asset(
+            'assets/svg/logo.svg', // Path to your logo image
+            height: 24, // Adjust the height as needed
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, top: 8.0), 
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.headlineSmall, 
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          const SizedBox(width: 8), // Add some space between the logo and the title
+          Text(title),
         ],
       ),
+      leading: canPop
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              tooltip: 'Back',
+            )
+          : null,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.account_circle),
+          onPressed: () async {
+            User? user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AccountPage()),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            }
+          },
+          tooltip: 'Account',
+        ),
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          onPressed: () {
+            // Handle notifications
+            // Implement your logic here
+          },
+          tooltip: 'Notifications',
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert),
+          tooltip: 'More options',
+          onSelected: (String result) {
+            if (result == 'privacy') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()),
+              );
+            }
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            const PopupMenuItem<String>(
+              value: 'privacy',
+              child: Text('Privacy Policy'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(100);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
