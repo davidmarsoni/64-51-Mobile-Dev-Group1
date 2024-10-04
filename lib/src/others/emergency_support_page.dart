@@ -1,31 +1,41 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:valais_roll/src/widgets/top_bar.dart';
 import 'package:valais_roll/src/widgets/nav_bar.dart';
 
 class EmergencySupportPage extends StatelessWidget {
   const EmergencySupportPage({super.key});
 
-  // Function to simulate a phone call
-  void _simulatePhoneCall(
-      BuildContext context, String serviceName, String number) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Calling $serviceName'),
-          content: Text(
-              'This is a simulated call to $serviceName at number $number.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
+  // Function to make a real phone call using a valid Swiss number or simulate for web
+  void _makePhoneCall(BuildContext context, String number) async {
+    if (kIsWeb) {
+      // If running on web, show a dialog instead of launching a phone call
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Simulated Call'),
+            content: Text('This is a simulated call to $number.'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      final Uri url = Uri(scheme: 'tel', path: number);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
+      } else {
+        throw 'Could not launch $url';
+      }
+    }
   }
 
   @override
@@ -50,7 +60,7 @@ class EmergencySupportPage extends StatelessWidget {
             ),
             const SizedBox(height: 10), // Space between texts
             const Text(
-              'Press the button depending your emergency',
+              'Press the button depending on your emergency',
               style: TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),
@@ -69,8 +79,8 @@ class EmergencySupportPage extends StatelessWidget {
                       ),
                       title: const Text('Hospital'),
                       subtitle: const Text('144'),
-                      onTap: () => _simulatePhoneCall(
-                          context, 'Hospital', '144'), // Simulate hospital call
+                      onTap: () => _makePhoneCall(context,
+                          '+41001'), // Simulated format for Swiss Hospital emergency number
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -84,8 +94,8 @@ class EmergencySupportPage extends StatelessWidget {
                       ),
                       title: const Text('Police'),
                       subtitle: const Text('117'),
-                      onTap: () => _simulatePhoneCall(
-                          context, 'Police', '117'), // Simulate police call
+                      onTap: () => _makePhoneCall(context,
+                          '+41002'), // Simulated format for Swiss Police emergency number
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -99,15 +109,15 @@ class EmergencySupportPage extends StatelessWidget {
                       ),
                       title: const Text('Firefighter'),
                       subtitle: const Text('118'),
-                      onTap: () => _simulatePhoneCall(context, 'Firefighter',
-                          '118'), // Simulate firefighter call
+                      onTap: () => _makePhoneCall(context,
+                          '+41003'), // Simulated format for Swiss Firefighter emergency number
                     ),
                   ),
-                  const SizedBox(height: 20), // Space before user info box
                 ],
               ),
             ),
 
+            /*
             // User Info Box
             Container(
               padding: const EdgeInsets.all(16),
@@ -128,6 +138,7 @@ class EmergencySupportPage extends StatelessWidget {
                 ],
               ),
             ),
+            */
           ],
         ),
       ),
