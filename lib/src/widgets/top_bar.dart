@@ -1,14 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:valais_roll/src/account/account_page.dart';
-import 'package:valais_roll/src/auth/login/login_page.dart';
-import 'package:valais_roll/src/others/privacy_policy_page.dart'; // Import the Privacy Policy page
 
 class TopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
   const TopBar({super.key, this.title = 'ValaisRoll'});
+
+  bool _isCurrentRoute(BuildContext context, String routeName) {
+    return ModalRoute.of(context)?.settings.name == routeName;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,16 +40,10 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
           icon: const Icon(Icons.account_circle),
           onPressed: () async {
             User? user = FirebaseAuth.instance.currentUser;
-            if (user != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AccountPage()),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
+            if (user != null && !_isCurrentRoute(context, '/account')) {
+              Navigator.pushNamed(context, '/account');
+            } else if (user == null && !_isCurrentRoute(context, '/login')) {
+              Navigator.pushNamed(context, '/login');
             }
           },
           tooltip: 'Account',
@@ -65,11 +60,8 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
           icon: const Icon(Icons.more_vert),
           tooltip: 'More options',
           onSelected: (String result) {
-            if (result == 'privacy') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()),
-              );
+            if (result == 'privacy' && !_isCurrentRoute(context, '/privacy_policy')) {
+              Navigator.pushNamed(context, '/privacy_policy');
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[

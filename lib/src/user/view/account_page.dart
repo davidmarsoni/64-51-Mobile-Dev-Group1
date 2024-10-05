@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:valais_roll/data/objects/appUser.dart';
-import 'package:valais_roll/src/auth/controller/user_controller.dart';
+import 'package:valais_roll/src/user/controller/user_controller.dart';
 import 'package:valais_roll/src/welcome/welcome_page.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
@@ -121,29 +121,33 @@ class _AccountPageState extends State<AccountPage> {
         return;
       }
 
-      AppUser updatedUser = AppUser(
-        uid: _currentUser.uid,
-        email: '', // Email cannot be updated with the firestore update method
-        name: _controllers['name']!.text,
-        surname: _controllers['surname']!.text,
-        phone: _controllers['phone']!.text,
-        birthDate: _controllers['birthDate']!.text,
-        username: _controllers['username']!.text,
-        address: _controllers['address']!.text,
-        number: _controllers['number']!.text,
-        npa: _controllers['npa']!.text,
-        locality: _controllers['locality']!.text,
-      );
+      if (field == 'email') {
+        await _changeEmail();
+      } else {
+        AppUser updatedUser = AppUser(
+          uid: _currentUser.uid,
+          email: '', // Email cannot be updated with the firestore update method
+          name: _controllers['name']!.text,
+          surname: _controllers['surname']!.text,
+          phone: _controllers['phone']!.text,
+          birthDate: _controllers['birthDate']!.text,
+          username: _controllers['username']!.text,
+          address: _controllers['address']!.text,
+          number: _controllers['number']!.text,
+          npa: _controllers['npa']!.text,
+          locality: _controllers['locality']!.text,
+        );
 
-      await _userController.updateUserInFirestore(updatedUser);
-      setState(() {
-        _currentUser = updatedUser;
-        _isEditing[field] = false;
-      });
+        await _userController.updateUserInFirestore(updatedUser);
+        setState(() {
+          _currentUser = updatedUser;
+          _isEditing[field] = false;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Information updated successfully')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Information updated successfully')),
+        );
+      }
     }
   }
 
@@ -213,8 +217,8 @@ class _AccountPageState extends State<AccountPage> {
               onPressed: () async {
                 if (newPasswordController.text == confirmPasswordController.text) {
                   try {
-                    await _userController.changePassword(context,newPasswordController.text);
-                    Navigator.pop(context);
+                    await _userController.changePassword(context, newPasswordController.text);
+                    Navigator.pop(context); 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Password changed successfully')),
                     );
@@ -258,8 +262,7 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Future<void> _changeEmail() async {
-    
+    Future<void> _changeEmail() async {
     if (_formKey.currentState!.validate()) {
       String? validationMessage = _userController.validateField('email', _controllers['email']!.text);
       if (validationMessage != null) {
@@ -268,11 +271,11 @@ class _AccountPageState extends State<AccountPage> {
         );
         return;
       }
-
+  
       try {
-        await _userController.changeEmail(context,_controllers['email']!.text);
+        String message = await _userController.changeEmail(context, _controllers['email']!.text);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email changed successfully')),
+          SnackBar(content: Text(message)),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -306,24 +309,24 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Future<void> _deleteAccount() async {
-    bool confirmed = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+ Future<void> _deleteAccount() async {
+  bool confirmed = await showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Delete Account'),
+      content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
 
     if (confirmed) {
       try {

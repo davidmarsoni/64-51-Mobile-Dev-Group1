@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/new_ride/view/itinary_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:valais_roll/src/others/emergency_support_page.dart';
 
 class BottomNavBar extends StatefulWidget {
   final bool isEnabled;
@@ -34,7 +32,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
         return 0;
       case '/history':
         return 1;
-      case '/emergencySupport':
+      case '/emergency_support':
         return 2;
       default:
         return 0;
@@ -52,12 +50,24 @@ class _BottomNavBarState extends State<BottomNavBar> {
           setState(() {
             _currentIndex = index;
           });
-          if(index == 0) {
-            Navigator.pushReplacementNamed(context, '/itinerary');
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/history');
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/emergencySupport');
+
+          String targetRoute;
+          switch (index) {
+            case 0:
+              targetRoute = '/itinerary';
+              break;
+            case 1:
+              targetRoute = '/history';
+              break;
+            case 2:
+              targetRoute = '/emergencySupport';
+              break;
+            default:
+              targetRoute = '/itinerary';
+          }
+
+          if (widget.currentRoute != targetRoute) {
+            Navigator.pushReplacementNamed(context, targetRoute);
           }
         }
       },

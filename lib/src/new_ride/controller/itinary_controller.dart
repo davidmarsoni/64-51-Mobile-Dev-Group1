@@ -9,7 +9,6 @@ class ItineraryController {
   LatLng? _currentP;
   List<Marker> _markers = [];
   List<String> _suggestedStations = [];
-  final bool _isFirstTime = true;
   Map<PolylineId, Polyline> polylines = {};
   List<Marker> get markers => _markers;
   List<String> get suggestedStations => _suggestedStations;

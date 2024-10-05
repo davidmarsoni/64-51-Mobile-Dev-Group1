@@ -6,7 +6,8 @@ class Button extends StatelessWidget {
   final bool isFilled;
   final double? horizontalPadding;
   final double? verticalPadding;
-  final Color? color; // Make color optional
+  final Color? color; 
+  final IconData? icon; 
 
   const Button({
     super.key,
@@ -15,7 +16,8 @@ class Button extends StatelessWidget {
     this.isFilled = true,
     this.horizontalPadding,
     this.verticalPadding,
-    this.color, // Make color optional
+    this.color, 
+    this.icon, 
   });
 
   @override
@@ -31,10 +33,19 @@ class Button extends StatelessWidget {
                 horizontal: horizontalPadding ?? defaultHorizontalPadding,
               ),
               textStyle: const TextStyle(fontSize: 18),
-              backgroundColor: color, // Use the optional color
+              backgroundColor: color, 
             ),
             onPressed: onPressed,
-            child: Text(text),
+            child: icon != null
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon),
+                      const SizedBox(width: 8),
+                      Text(text),
+                    ],
+                  )
+                : Text(text),
           )
         : OutlinedButton(
             style: OutlinedButton.styleFrom(
@@ -43,10 +54,19 @@ class Button extends StatelessWidget {
                 horizontal: horizontalPadding ?? defaultHorizontalPadding,
               ),
               textStyle: const TextStyle(fontSize: 18),
-              side: color != null ? BorderSide(color: color!) : null, // Use the optional color
+              side: color != null ? BorderSide(color: color!) : null, 
             ),
             onPressed: onPressed,
-            child: Text(text),
+            child: icon != null
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon),
+                      const SizedBox(width: 8),
+                      Text(text),
+                    ],
+                  )
+                : Text(text),
           );
   }
 }

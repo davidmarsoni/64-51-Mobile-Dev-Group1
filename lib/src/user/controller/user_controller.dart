@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/appUser.dart';
+import 'package:valais_roll/src/user/view/login_page.dart'; 
 
 class UserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -9,7 +10,6 @@ class UserController {
 
   User? get currentUser => _auth.currentUser;
 
-  // Login with email and password
   Future<User?> loginWithEmail(String email, String password) async {
     UserCredential userCredential = await _auth.signInWithEmailAndPassword(
       email: email,
@@ -142,51 +142,65 @@ class UserController {
     }
   }
 
-  Future<void> changePassword(BuildContext context, String newPassword) async {
+   Future<void> changePassword(BuildContext context, String newPassword) async {
     User? user = _auth.currentUser;
+  
     if (user != null) {
       try {
+        
+        // Always show reauthentication popup
+        await _showReauthenticationPopup(context);
+  
+        // Attempt to update the password
         await user.updatePassword(newPassword);
+  
+        // Sign out and sign in with the new password
         await _auth.signOut();
+  
         await _auth.signInWithEmailAndPassword(
           email: user.email!,
           password: newPassword,
         );
+      
       } on FirebaseAuthException catch (e) {
-        if (e.code == 'requires-recent-login') {
-          // Show reauthentication popup
-          await _showReauthenticationPopup(context);
-        } else {
-          throw Exception('Failed to change password: ${e.message}');
-        }
+        throw Exception('Failed to change password: ${e.message}');
       }
     } else {
       throw Exception('No user is currently signed in.');
     }
   }
 
-  Future<void> changeEmail(BuildContext context, String newEmail) async {
+  Future<String> changeEmail(BuildContext context, String newEmail) async {
     User? user = _auth.currentUser;
+  
     if (user != null) {
       try {
+        // Always show reauthentication popup
+        await _showReauthenticationPopup(context);
+  
+        // Proceed to change the email after reauthentication
         await user.verifyBeforeUpdateEmail(newEmail);
+  
+        // Inform the user to verify their email
+        String message = 'Email updated. Please verify your new email to continue. You will be signed out.';
+  
+        // Sign out the user
         await _auth.signOut();
-        await _auth.signInWithEmailAndPassword(
-          email: newEmail,
-          password: user.email!, // Assuming the password remains the same
-        );
+  
+        // Redirect to login page route
+        Navigator.of(context).pushReplacementNamed('/login');
+  
+        return message;
       } on FirebaseAuthException catch (e) {
-        if (e.code == 'requires-recent-login') {
-          // Show reauthentication popup
-          await _showReauthenticationPopup(context);
-        } else {
-          throw Exception('Failed to change email: ${e.message}');
-        }
+        throw Exception('Failed to change email: ${e.message}');
       }
     } else {
       throw Exception('No user is currently signed in.');
     }
   }
+    
+  
+ 
 
   String? validateField(String value, String fieldType) {
     if (value.isEmpty) {
@@ -230,9 +244,9 @@ class UserController {
     return null;
   }
 
-  Future<void> deleteUser(BuildContext context) async {
+   Future<void> deleteUser(BuildContext context) async {
     User? user = _auth.currentUser;
-
+  
     if (user != null) {
       try {
         // Attempt to delete the user
@@ -241,57 +255,43 @@ class UserController {
         if (e.code == 'requires-recent-login') {
           // Show reauthentication popup
           await _showReauthenticationPopup(context);
+  
+          // Retry deleting the user after reauthentication
+          try {
+            await user.delete();
+          } on FirebaseAuthException catch (e) {
+            throw Exception('Failed to delete user after reauthentication: ${e.message}');
+          }
         } else {
           throw Exception('Failed to delete user: ${e.message}');
         }
       }
-
+  
       // Delete the user's document from Firestore
       await _firestore.collection('users').doc(user.uid).delete();
+    } else {
+      throw Exception('No user is currently signed in.');
     }
   }
 
   Future<void> _showReauthenticationPopup(BuildContext context) async {
-    String? email = _auth.currentUser?.email;
-    if (email == null) return;
-
-    TextEditingController passwordController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Reauthenticate'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Please enter your password to reauthenticate.'),
-              TextField(
-                controller: passwordController,
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                try {
-                  AuthCredential credential = EmailAuthProvider.credential(
-                    email: email,
-                    password: passwordController.text,
-                  );
-                  await _auth.currentUser?.reauthenticateWithCredential(credential);
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  print('Reauthentication failed: $e');
-                }
-              },
-              child: Text('Reauthenticate'),
-            ),
-          ],
-        );
-      },
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoginPage(isReauthentication: true),
+      ),
     );
+
+    if (result == true) {
+      // Reauthentication was successful
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reauthentication successful')),
+      );
+    } else {
+      // Reauthentication failed or was canceled
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reauthentication failed or canceled')),
+      );
+    }
   }
 }

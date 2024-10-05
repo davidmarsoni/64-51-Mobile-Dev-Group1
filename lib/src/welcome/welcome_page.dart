@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:valais_roll/src/auth/create_account/create_account_page.dart';
-import 'package:valais_roll/src/auth/login/login_page.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 
@@ -13,10 +11,10 @@ class WelcomePage extends StatelessWidget {
     return BasePage(
       title: 'ValaisRoll',
       body: Padding(
-        padding: const EdgeInsets.all(20.0), 
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start, 
-          crossAxisAlignment: CrossAxisAlignment.start, 
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Welcome to ValaisRoll!',
@@ -29,25 +27,19 @@ class WelcomePage extends StatelessWidget {
                   child: Button(
                     text: 'Create Account',
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const CreateAccountPage()),
-                      );
+                      Navigator.pushNamed(context, '/create_account');
                     },
                     horizontalPadding: 20,
-                    isFilled: true, 
+                    isFilled: true,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0), 
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Button(
                     text: 'Login',
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
-                      );
+                      Navigator.pushNamed(context, '/login');
                     },
                     isFilled: false, // This is an outlined button
                   ),
@@ -61,7 +53,7 @@ class WelcomePage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             SvgPicture.asset(
-              'assets/svg/welcome.svg', 
+              'assets/svg/welcome.svg',
               height: MediaQuery.of(context).size.height * 0.75,
             ),
           ],

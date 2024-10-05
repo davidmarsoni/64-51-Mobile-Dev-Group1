@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/appUser.dart';
 import 'package:valais_roll/src/others/privacy_policy_page.dart';
-import 'package:valais_roll/src/auth/controller/user_controller.dart';
+import 'package:valais_roll/src/user/controller/user_controller.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
 import 'package:intl/intl.dart';
@@ -171,6 +171,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account created successfully!, you are now logged in.')),
         );
+
+        //redirect to home page
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       }
     } on FirebaseAuthException catch (e) {
       String message = _userController.getErrorMessage(e);
@@ -249,8 +252,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 const Text('Avatar and Username', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 _buildTextField('Username', 'username', autofillHints: [AutofillHints.username]),
-                const SizedBox(height: 10),
-                ElevatedButton(onPressed: () {}, child: const Text('Upload Avatar Picture')),
                 const SizedBox(height: 20),
 
                 // Address Section

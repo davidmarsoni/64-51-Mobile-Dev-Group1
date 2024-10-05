@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:valais_roll/src/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/widgets/button.dart';
 
 class BicycleSelectionView extends StatefulWidget {
   final LatLng startPoint;
@@ -40,7 +41,6 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: 'Your Route',
       isBottomNavBarEnabled: true,
       body: Column(
         children: [
@@ -65,23 +65,27 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                 SizedBox(height: 10),
                 Row(
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // Handle cancellation
-                      },
-                      icon: Icon(Icons.cancel),
-                      label: Text("Cancel your booking"),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // Handle start ride
-                      },
-                      icon: Icon(Icons.directions_bike),
-                      label: Text("Start your ride"),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
-                    ),
+                   Button(
+                    text: "Cancel your booking",
+                    onPressed: () {
+                      // Handle cancellation
+                    },
+                    isFilled: true,
+                    color: Colors.red,
+                    horizontalPadding: 20.0,
+                    verticalPadding: 12.0, 
+                  ),
+                  SizedBox(width: 10),
+                  Button(
+                    text: "Start your ride",
+                    onPressed: () {
+                      // Handle start ride
+                    },
+                    isFilled: true,
+                    horizontalPadding: 20.0, 
+                    verticalPadding: 12.0, 
+                    icon: Icons.directions_bike,
+                  ),
                   ],
                 ),
                 SizedBox(height: 20),

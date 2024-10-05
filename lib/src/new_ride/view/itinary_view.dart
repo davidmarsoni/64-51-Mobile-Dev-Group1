@@ -134,7 +134,6 @@ class _ItineraryPageState extends State<ItineraryPage> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: 'Bike-sharing platform',
       isBottomNavBarEnabled: true,
       body: Stack(
         children: [
@@ -226,7 +225,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
             Positioned(
               bottom: 30,
               right: 30,
-              child: FloatingActionButton(
+                child: FloatingActionButton.extended(
                 onPressed: () {
                   if (_startLatLng != null && _destinationLatLng != null) {
                     Navigator.push(
@@ -242,7 +241,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     _showErrorMessage("Both start and destination must be valid stations.");
                   }
                 },
-                child: Icon(Icons.directions),
+                icon: Icon(Icons.directions),
+                label: Text('Validate your itinerary'),
               ),
             ),
         ],
