@@ -8,7 +8,7 @@ class BasePage extends StatelessWidget {
   final bool isBottomNavBarEnabled;
 
   const BasePage({
-    this.title = 'ValaisRoll', 
+    this.title = 'ValaisRoll',
     required this.body,
     this.isBottomNavBarEnabled = true,
     super.key,
@@ -19,7 +19,10 @@ class BasePage extends StatelessWidget {
     return Scaffold(
       appBar: TopBar(title: title),
       body: body,
-      bottomNavigationBar: BottomNavBar(isEnabled: isBottomNavBarEnabled),
+      bottomNavigationBar: BottomNavBar(
+        isEnabled: isBottomNavBarEnabled,
+        currentRoute: ModalRoute.of(context)?.settings.name ?? '/',
+      ),
     );
   }
 }

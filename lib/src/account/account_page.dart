@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:valais_roll/data/objects/appUser.dart';
-import 'package:valais_roll/src/services/auth_service.dart';
+import 'package:valais_roll/src/auth/controller/user_controller.dart';
 import 'package:valais_roll/src/welcome/welcome_page.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
@@ -15,7 +15,7 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-  final AuthService _authService = AuthService();
+  final UserController _userController = UserController();
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {
     'email': TextEditingController(),
@@ -82,9 +82,9 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _loadUserData() async {
-    User? user = _authService.currentUser;
+    User? user = _userController.currentUser;
     if (user != null) {
-      AppUser? appUser = await _authService.getUserFromFirestore(user.uid);
+      AppUser? appUser = await _userController.getUserFromFirestore(user.uid);
       print(appUser);
       if (appUser != null) {
         setState(() {
@@ -112,7 +112,7 @@ class _AccountPageState extends State<AccountPage> {
 
   void _saveChanges(String field) async {
     if (_formKey.currentState!.validate()) {
-      String? validationMessage = _authService.validateField(_controllers[field]!.text, field);
+      String? validationMessage = _userController.validateField(_controllers[field]!.text, field);
       
       if (validationMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -135,7 +135,7 @@ class _AccountPageState extends State<AccountPage> {
         locality: _controllers['locality']!.text,
       );
 
-      await _authService.updateUserInFirestore(updatedUser);
+      await _userController.updateUserInFirestore(updatedUser);
       setState(() {
         _currentUser = updatedUser;
         _isEditing[field] = false;
@@ -213,7 +213,7 @@ class _AccountPageState extends State<AccountPage> {
               onPressed: () async {
                 if (newPasswordController.text == confirmPasswordController.text) {
                   try {
-                    await _authService.changePassword(context,newPasswordController.text);
+                    await _userController.changePassword(context,newPasswordController.text);
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Password changed successfully')),
@@ -261,7 +261,7 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _changeEmail() async {
     
     if (_formKey.currentState!.validate()) {
-      String? validationMessage = _authService.validateField('email', _controllers['email']!.text);
+      String? validationMessage = _userController.validateField('email', _controllers['email']!.text);
       if (validationMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(validationMessage)),
@@ -270,7 +270,7 @@ class _AccountPageState extends State<AccountPage> {
       }
 
       try {
-        await _authService.changeEmail(context,_controllers['email']!.text);
+        await _userController.changeEmail(context,_controllers['email']!.text);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Email changed successfully')),
         );
@@ -298,7 +298,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _logout() async {
-    await _authService.logout();
+    await _userController.logout();
     // Redirect to welcome page
    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => WelcomePage()),
@@ -327,7 +327,7 @@ class _AccountPageState extends State<AccountPage> {
 
     if (confirmed) {
       try {
-        await _authService.deleteUser(context);
+        await _userController.deleteUser(context);
         Navigator.of(context).pushReplacementNamed('/login');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account deleted successfully')),
@@ -362,7 +362,7 @@ class _AccountPageState extends State<AccountPage> {
           ? () => _selectDate(context)
           : null,
       validator: (value) {
-        String? validationMessage = _authService.validateField(controllerKey, value!);
+        String? validationMessage = _userController.validateField(controllerKey, value!);
         if (validationMessage != null) {
           return validationMessage;
         }
@@ -374,7 +374,6 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: 'Account Information',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -383,6 +382,8 @@ class _AccountPageState extends State<AccountPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                  const Text('Personal Information', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
                 const Text('Personal Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 _buildTextField('Name', 'name'),

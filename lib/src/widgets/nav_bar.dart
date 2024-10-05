@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:valais_roll/src/new_ride/view/itinary_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:valais_roll/src/others/emergency_support_page.dart'; // Import the emergency support page
+import 'package:valais_roll/src/others/emergency_support_page.dart';
 
 class BottomNavBar extends StatefulWidget {
   final bool isEnabled;
+  final String currentRoute;
 
   const BottomNavBar({
     super.key,
     required this.isEnabled,
+    required this.currentRoute,
   });
 
   @override
@@ -16,13 +18,27 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   User? _currentUser;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = _getIndexFromRoute(widget.currentRoute);
     _currentUser = FirebaseAuth.instance.currentUser;
+  }
+
+  int _getIndexFromRoute(String route) {
+    switch (route) {
+      case '/itinerary':
+        return 0;
+      case '/history':
+        return 1;
+      case '/emergencySupport':
+        return 2;
+      default:
+        return 0;
+    }
   }
 
   @override
@@ -36,31 +52,16 @@ class _BottomNavBarState extends State<BottomNavBar> {
           setState(() {
             _currentIndex = index;
           });
-          if(index == 1){
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const ItineraryPage()),
-            );
-          }
-
-          if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const EmergencySupportPage()),
-            );
+          if(index == 0) {
+            Navigator.pushReplacementNamed(context, '/itinerary');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/history');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/emergencySupport');
           }
         }
       },
       destinations: <NavigationDestination>[
-        NavigationDestination(
-          icon: Icon(
-            Icons.directions_bike,
-            color: navBarEnabled ? null : Colors.grey,
-          ),
-          label: 'Home',
-        ),
         NavigationDestination(
           icon: Icon(
             Icons.search,
@@ -70,10 +71,17 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
         NavigationDestination(
           icon: Icon(
+            Icons.directions_bike,
+            color: navBarEnabled ? null : Colors.grey,
+          ),
+          label: 'Your rides',
+        ),
+        NavigationDestination(
+          icon: Icon(
             Icons.notifications,
             color: navBarEnabled ? null : Colors.grey,
           ),
-          label: 'Emmergency Support',
+          label: 'Emergency Support',
         ),
       ],
     );

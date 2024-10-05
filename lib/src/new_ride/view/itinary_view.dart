@@ -4,8 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:valais_roll/src/new_ride/controller/itinary_controller.dart';
 import 'package:valais_roll/src/new_ride/view/bicycle_selection_view.dart';
-import 'package:valais_roll/src/widgets/nav_bar.dart';
-import 'package:valais_roll/src/widgets/top_bar.dart';
+import 'package:valais_roll/src/widgets/base_page.dart';
 
 class ItineraryPage extends StatefulWidget {
   const ItineraryPage({super.key});
@@ -134,10 +133,9 @@ class _ItineraryPageState extends State<ItineraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: TopBar(
-        title: 'Bike-sharing platform',
-      ),
+    return BasePage(
+      title: 'Bike-sharing platform',
+      isBottomNavBarEnabled: true,
       body: Stack(
         children: [
           // The Map
@@ -249,7 +247,6 @@ class _ItineraryPageState extends State<ItineraryPage> {
             ),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(isEnabled: true),
     );
   }
 

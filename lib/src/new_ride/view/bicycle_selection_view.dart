@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:valais_roll/src/new_ride/controller/bicycle_selection_controller.dart';
+import 'package:valais_roll/src/widgets/base_page.dart';
 
 class BicycleSelectionView extends StatefulWidget {
   final LatLng startPoint;
@@ -38,10 +39,9 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Your Route'),
-      ),
+    return BasePage(
+      title: 'Your Route',
+      isBottomNavBarEnabled: true,
       body: Column(
         children: [
           Padding(

@@ -1,9 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/auth/create_account/create_account_page.dart';
-import 'package:valais_roll/src/services/auth_service.dart';
-import 'package:valais_roll/src/welcome/welcome_page.dart';
+import 'package:valais_roll/src/auth/controller/user_controller.dart';
 import 'package:valais_roll/src/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 
@@ -18,7 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
+  final UserController _userController = UserController();
 
   User? _currentUser;
   bool _passwordVisible = false;
@@ -27,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _currentUser = _authService.currentUser;
+    _currentUser = _userController.currentUser;
   }
 
   @override
@@ -40,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
   void _loginWithEmail() async {
     if (_formKey.currentState!.validate()) {
       try {
-        User? user = await _authService.loginWithEmail(
+        User? user = await _userController.loginWithEmail(
           _emailController.text,
           _passwordController.text,
         );
@@ -50,8 +48,9 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login successful')),
         );
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       } on FirebaseAuthException catch (e) {
-        String message = _authService.getErrorMessage(e);
+        String message = _userController.getErrorMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
@@ -60,18 +59,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _logout() async {
-    await _authService.logout();
+    await _userController.logout();
     setState(() {
       _currentUser = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Logout successful')),
     );
-    // Redirect to welcome page
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => WelcomePage()),
-      (Route<dynamic> route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
   String? _validatePassword(String value) {
@@ -87,15 +82,22 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: 'Login Page',
       isBottomNavBarEnabled: false,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start, 
           crossAxisAlignment: CrossAxisAlignment.start, 
-          children: [
-             if(_currentUser != null) ...[
+                    children: [
+                      const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+            const SizedBox(height: 20),
+            if(_currentUser != null) ...[
                    const SizedBox(height: 20),
                    Text('You are already logged as: ${_currentUser!.email}',
                   style: const TextStyle(fontSize: 18)),
@@ -193,12 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const CreateAccountPage(),
-                                  ),
-                                );
+                                Navigator.pushNamed(context, '/createAccount');
                               },
                           ),
                         ],

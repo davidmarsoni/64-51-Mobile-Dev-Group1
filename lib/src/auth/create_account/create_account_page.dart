@@ -3,11 +3,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/appUser.dart';
 import 'package:valais_roll/src/others/privacy_policy_page.dart';
-import 'package:valais_roll/src/services/auth_service.dart';
+import 'package:valais_roll/src/auth/controller/user_controller.dart';
 import 'package:valais_roll/src/widgets/button.dart';
-import '../../widgets/nav_bar.dart';
-import '../../widgets/top_bar.dart';
-import 'package:intl/intl.dart';  
+import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:intl/intl.dart';
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
@@ -17,7 +16,7 @@ class CreateAccountPage extends StatefulWidget {
 }
 
 class _CreateAccountPageState extends State<CreateAccountPage> {
-  final AuthService _authService = AuthService();
+  final UserController _userController = UserController();
   final _formKey = GlobalKey<FormState>();
 
   final Map<String, TextEditingController> _controllers = {
@@ -40,8 +39,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   bool _acceptPrivacyPolicy = false;
   final Map<String, String?> _errors = {};
 
-  
-
   Widget _buildBirthDateField() {
     return TextFormField(
       controller: _controllers['birthDate'],
@@ -49,11 +46,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         labelText: 'Birth Date',
         border: OutlineInputBorder(),
       ),
-      readOnly: true,  // Prevent manual text input
+      readOnly: true, // Prevent manual text input
       onTap: () {
-        _selectBirthDate(context);  // Open date picker on tap
+        _selectBirthDate(context); // Open date picker on tap
       },
-      validator: (value) => _authService.validateField(value!, 'birthDate'),
+      validator: (value) => _userController.validateField(value!, 'birthDate'),
     );
   }
 
@@ -92,20 +89,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     );
   }
 
-    void _createAccount() async {
+  void _createAccount() async {
     setState(() {
       // Validate all fields
       _errors.clear();
       _controllers.forEach((key, controller) {
-        _errors[key] = _authService.validateField(controller.text, key);
+        _errors[key] = _userController.validateField(controller.text, key);
       });
-  
+
       // Check if passwords match
       if (_controllers['password']!.text != _controllers['confirmPassword']!.text) {
         _errors['confirmPassword'] = 'Passwords do not match';
       }
     });
-  
+
     if (!_formKey.currentState!.validate() || _errors.values.any((error) => error != null) || !_acceptPrivacyPolicy) {
       if (!_acceptPrivacyPolicy) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -114,7 +111,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       }
       return;
     }
-  
+
     try {
       // Create the AppUser object with form data
       AppUser newUser = AppUser(
@@ -130,29 +127,29 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         npa: _controllers['npa']!.text,
         locality: _controllers['locality']!.text,
       );
-  
+
       // Check if a user already exists with this address
-      bool userExists = await _authService.checkUserByAddress(newUser.address, newUser.number, newUser.npa);
-  
+      bool userExists = await _userController.checkUserByAddress(newUser.address, newUser.number, newUser.npa);
+
       if (userExists) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('A user already exists with this address.')),
         );
         return;
       }
-  
+
       // Create the account
-      User? user = await _authService.createAccountWithEmail(newUser.email, _controllers['password']!.text);
-  
+      User? user = await _userController.createAccountWithEmail(newUser.email, _controllers['password']!.text);
+
       if (user != null) {
         // Send email verification
         if (!user.emailVerified) {
-          await _authService.sendEmailVerification(user);
+          await _userController.sendEmailVerification(user);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Verification email sent. Please check your email.')),
           );
         }
-  
+
         // Set the UID in the AppUser object
         newUser = AppUser(
           uid: user.uid,
@@ -167,16 +164,16 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           npa: newUser.npa,
           locality: newUser.locality,
         );
-  
+
         // Add the user to Firestore
-        await _authService.addUserToFirestore(user, newUser);
-  
+        await _userController.addUserToFirestore(user, newUser);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account created successfully!, you are now logged in.')),
         );
       }
     } on FirebaseAuthException catch (e) {
-      String message = _authService.getErrorMessage(e);
+      String message = _userController.getErrorMessage(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
@@ -211,10 +208,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       ),
       obscureText: obscureText && (controllerKey == 'password' ? !_passwordVisible : !_confirmPasswordVisible),
       keyboardType: keyboardType,
-      validator: (value) => _authService.validateField(value!, controllerKey),
+      validator: (value) => _userController.validateField(value!, controllerKey),
       onChanged: (value) {
         setState(() {
-          _errors[controllerKey] = _authService.validateField(value, controllerKey);
+          _errors[controllerKey] = _userController.validateField(value, controllerKey);
         });
       },
       autofillHints: autofillHints,
@@ -223,8 +220,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const TopBar(title: 'ValaisRoll'),
+    return BasePage(
+      title: 'Create Account',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -355,7 +352,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(isEnabled: false),
+      isBottomNavBarEnabled: false,
     );
   }
 }
