@@ -60,7 +60,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
               targetRoute = '/history';
               break;
             case 2:
-              targetRoute = '/emergencySupport';
+              targetRoute = '/emergency_support';
               break;
             default:
               targetRoute = '/itinerary';
