@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/appUser.dart';
-import 'package:valais_roll/src/user/view/login_page.dart'; 
+import 'package:valais_roll/src/user/user/view/login_page.dart'; 
 
 class UserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;

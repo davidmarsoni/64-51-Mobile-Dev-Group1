@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/widgets/nav_bar.dart';
-import 'package:valais_roll/src/widgets/top_bar.dart';
+import 'package:valais_roll/src/user/widgets/nav_bar.dart';
+import 'package:valais_roll/src/user/widgets/top_bar.dart';
 
 class BasePage extends StatelessWidget {
   final String title;

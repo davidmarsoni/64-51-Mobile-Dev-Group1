@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 
 class WelcomePage extends StatelessWidget {

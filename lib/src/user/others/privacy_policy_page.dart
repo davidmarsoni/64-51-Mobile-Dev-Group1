@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/user/widgets/base_page.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});

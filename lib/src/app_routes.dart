@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/others/privacy_policy_page.dart';
-import 'package:valais_roll/src/user/view/account_page.dart';
-import 'package:valais_roll/src/welcome/welcome_page.dart';
-import 'package:valais_roll/src/new_ride/view/itinary_view.dart';
-import 'package:valais_roll/src/others/emergency_support_page.dart';
-import 'package:valais_roll/src/user/view/create_account_page.dart';
-import 'package:valais_roll/src/user/view/login_page.dart';
+import 'package:valais_roll/src/owner/view/owner_dashboard_page.dart';
+import 'package:valais_roll/src/owner/view/owner_login_page.dart';
+import 'package:valais_roll/src/user/others/privacy_policy_page.dart';
+import 'package:valais_roll/src/user/user/view/account_page.dart';
+import 'package:valais_roll/src/user/welcome/welcome_page.dart';
+import 'package:valais_roll/src/user/new_ride/view/itinary_view.dart';
+import 'package:valais_roll/src/user/others/emergency_support_page.dart';
+import 'package:valais_roll/src/user/user/view/create_account_page.dart';
+import 'package:valais_roll/src/user/user/view/login_page.dart';
+
 
 class AppRoutes {
-  static Map<String, WidgetBuilder> getRoutes(Future<bool> Function() checkUserAuthentication) {
+  static Map<String, WidgetBuilder> getUserRoutes(Future<bool> Function() checkUserAuthentication) {
     return {
       '/': (context) => FutureBuilder<bool>(
         future: checkUserAuthentication(),
@@ -30,6 +33,25 @@ class AppRoutes {
       '/itinerary': (context) => const ItineraryPage(),
       '/emergency_support': (context) => const EmergencySupportPage(),
       '/privacy_policy': (context) => const PrivacyPolicyPage(),
+    };
+  }
+
+   static Map<String, WidgetBuilder> getOwnerRoutes(Future<bool> Function() checkUserAuthentication) {
+    return {
+      '/': (context) => FutureBuilder<bool>(
+        future: checkUserAuthentication(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasData && snapshot.data == true) {
+            return const OwnerDashboardPage();
+          } else {
+            return const OwnerLoginPage();
+          }
+        },
+      ),
+      '/owner_login': (context) => const OwnerLoginPage(),
+      '/owner_dashboard': (context) => const OwnerDashboardPage(),
     };
   }
 }

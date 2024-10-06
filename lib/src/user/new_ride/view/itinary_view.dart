@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:valais_roll/src/new_ride/controller/itinary_controller.dart';
-import 'package:valais_roll/src/new_ride/view/bicycle_selection_view.dart';
-import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/user/new_ride/controller/itinary_controller.dart';
+import 'package:valais_roll/src/user/new_ride/view/bicycle_selection_view.dart';
+import 'package:valais_roll/src/user/widgets/base_page.dart';
 
 class ItineraryPage extends StatefulWidget {
   const ItineraryPage({super.key});

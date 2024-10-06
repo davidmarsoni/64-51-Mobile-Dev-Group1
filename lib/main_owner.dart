@@ -11,11 +11,11 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await dotenv.load(fileName: ".env");
-  runApp(const UserApp());
+  runApp(const OwnerApp());
 }
 
-class UserApp extends StatelessWidget {
-  const UserApp({super.key});
+class OwnerApp extends StatelessWidget {
+  const OwnerApp({super.key});
 
   Future<bool> _checkUserAuthentication() async {
     User? user = FirebaseAuth.instance.currentUser;
@@ -25,14 +25,14 @@ class UserApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ValaisRoll',
+      title: 'ValaisRoll Admin',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
-      routes: AppRoutes.getUserRoutes(_checkUserAuthentication),
+      routes: AppRoutes.getOwnerRoutes(_checkUserAuthentication),
     );
   }
 }

@@ -1,25 +1,22 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/user/controller/user_controller.dart';
-import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/owner/controller/owner_controller.dart';
+import 'package:valais_roll/src/owner/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 
-class LoginPage extends StatefulWidget {
-  final bool isReauthentication;
-
-  const LoginPage({super.key, this.isReauthentication = false});
+class OwnerLoginPage extends StatefulWidget {
+  const OwnerLoginPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _OwnerLoginPageState createState() => _OwnerLoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _OwnerLoginPageState extends State<OwnerLoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final UserController _userController = UserController();
-
+  final OwnerController _ownerController = OwnerController();
+  
   User? _currentUser;
   bool _passwordVisible = false;
   String? passwordError;
@@ -27,9 +24,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _currentUser = _userController.currentUser;
-    if (widget.isReauthentication && _currentUser != null) {
-      _emailController.text = _currentUser!.email!;
+    _currentUser = _ownerController.currentUser;
+    if (_currentUser != null) {
+      _checkOwnerStatusAndNavigate(_currentUser!.uid);
     }
   }
 
@@ -43,25 +40,26 @@ class _LoginPageState extends State<LoginPage> {
   void _loginWithEmail() async {
     if (_formKey.currentState!.validate()) {
       try {
-        User? user = await _userController.loginWithEmail(
+        User? user = await _ownerController.loginWithEmail(
           _emailController.text,
           _passwordController.text,
         );
-        setState(() {
-          _currentUser = user;
-        });
-        if(!widget.isReauthentication) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login successful')),
-          );
-        }
-        if (widget.isReauthentication) {
-          Navigator.pop(context, true); 
-        } else {
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        if (user != null) {
+          bool isOwner = await _ownerController.isOwner(user.uid);
+          if (isOwner) {
+            setState(() {
+              _currentUser = user;
+            });
+            _navigateToDashboard();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('You do not have access to this area.')),
+            );
+            await _ownerController.logout();
+          }
         }
       } on FirebaseAuthException catch (e) {
-        String message = _userController.getErrorMessage(e);
+        String message = _ownerController.getErrorMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
@@ -69,15 +67,34 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _checkOwnerStatusAndNavigate(String uid) async {
+    bool isOwner = await _ownerController.isOwner(uid);
+    if (isOwner) {
+      _navigateToDashboard();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You do not have access to this area.')),
+      );
+      await _ownerController.logout();
+    }
+  }
+
+  void _navigateToDashboard() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Login successful')),
+    );
+    Navigator.pushNamedAndRemoveUntil(context, '/owner_dashboard', (route) => false);
+  }
+
   void _logout() async {
-    await _userController.logout();
+    await _ownerController.logout();
     setState(() {
       _currentUser = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Logout successful')),
     );
-    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(context, '/owner_login', (route) => false);
   }
 
   String? _validatePassword(String value) {
@@ -93,36 +110,25 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      isBottomNavBarEnabled: false,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start, 
-          crossAxisAlignment: CrossAxisAlignment.start, 
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.isReauthentication ? 'Reauthentication' : 'Login',
-              style: const TextStyle(
+            const Text(
+              'Owner Login',
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            if (widget.isReauthentication) ...[
-              const SizedBox(height: 8),
-              const Text(
-                'For security reasons, please reauthenticate',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-            ],
             const SizedBox(height: 20),
-            if (_currentUser != null && !widget.isReauthentication) ...[
+            if (_currentUser != null) ...[
               const SizedBox(height: 20),
-              Text('You are already logged as: ${_currentUser!.email}',
-                style: const TextStyle(fontSize: 18)),
-              const SizedBox(height: 8), 
+              Text('You are already logged in as: ${_currentUser!.email}',
+                  style: const TextStyle(fontSize: 18)),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Button(
@@ -132,13 +138,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ],
-            if (_currentUser == null || widget.isReauthentication) ...[
-              const Text('No user connected', style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 20),
+            if (_currentUser == null) ...[
               Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextFormField(
                       controller: _emailController,
@@ -200,29 +204,6 @@ class _LoginPageState extends State<LoginPage> {
                         }
                       },
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: RichText(
-                        textAlign: TextAlign.left, 
-                        text: TextSpan(
-                          text: "If you don't have an account yet, please create your account ",
-                          style: const TextStyle(color: Colors.black, fontSize: 14),
-                          children: [
-                            TextSpan(
-                              text: 'here',
-                              style: const TextStyle(
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.pushNamed(context, '/createAccount');
-                                },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 20),
                     Align(
                       alignment: Alignment.centerRight,
@@ -230,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: _loginWithEmail,
                         text: 'Login',
                       ),
-                    ),   
+                    ),
                   ],
                 ),
               ),

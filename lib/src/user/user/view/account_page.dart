@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:valais_roll/data/objects/appUser.dart';
-import 'package:valais_roll/src/user/controller/user_controller.dart';
-import 'package:valais_roll/src/welcome/welcome_page.dart';
-import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/user/user/controller/user_controller.dart';
+import 'package:valais_roll/src/user/welcome/welcome_page.dart';
+import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 import 'package:intl/intl.dart'; // Add this import for date formatting
 

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EmergencySupportPage extends StatelessWidget {

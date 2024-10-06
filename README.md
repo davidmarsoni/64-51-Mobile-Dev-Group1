@@ -1,6 +1,11 @@
 # valais_roll
 
 A bike renting app for the Valais region in Switzerland.
+## start the owner app
+
+```bash
+flutter run -t lib/main_owner.dart -d chrome
+```
 
 ## Getting Started
 
@@ -19,3 +24,16 @@ GOOGLE_MAPS_API_KEY=your_google_api_key
     <string name="google_api_key">your_google_maps_api_key</string>
 </resources>
 ```
+
+### Setup an owner of the app
+
+1. go the the firebase console and add a new user with the email and a password.
+
+2. go to the firestore database and add a new collection named `owners` and add a new document with a random id and the following content:
+
+```json
+uid: "the_uid_of_the_user"
+```
+
+
+ 

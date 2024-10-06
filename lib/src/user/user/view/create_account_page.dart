@@ -2,10 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/appUser.dart';
-import 'package:valais_roll/src/others/privacy_policy_page.dart';
-import 'package:valais_roll/src/user/controller/user_controller.dart';
+import 'package:valais_roll/src/user/others/privacy_policy_page.dart';
+import 'package:valais_roll/src/user/user/controller/user_controller.dart';
 import 'package:valais_roll/src/widgets/button.dart';
-import 'package:valais_roll/src/widgets/base_page.dart';
+import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:intl/intl.dart';
 
 class CreateAccountPage extends StatefulWidget {
