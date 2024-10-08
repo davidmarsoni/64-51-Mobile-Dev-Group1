@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:valais_roll/src/others/privacy_policy_page.dart';
+import 'package:valais_roll/src/payment/view/payment_method_page.dart';
 import 'package:valais_roll/src/user/view/account_page.dart';
 import 'package:valais_roll/src/welcome/welcome_page.dart';
 import 'package:valais_roll/src/new_ride/view/itinary_view.dart';
@@ -30,6 +31,7 @@ class AppRoutes {
       '/itinerary': (context) => const ItineraryPage(),
       '/emergency_support': (context) => const EmergencySupportPage(),
       '/privacy_policy': (context) => const PrivacyPolicyPage(),
+      '/paymentApp': (context) => const PaymentMethodPage(),
     };
   }
 }

@@ -423,6 +423,18 @@ class _AccountPageState extends State<AccountPage> {
                 _buildTextField('Locality', 'locality'),
                 const SizedBox(height: 20),
 
+                const Text('Payment method', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Button(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/paymentApp');
+                  },
+                  text: 'Manage payment method',
+                  isFilled: false,
+                  horizontalPadding: 20,
+                ),
+                const SizedBox(height: 20),
+
                 const Text('Account Actions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Button(
