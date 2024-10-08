@@ -81,6 +81,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  // When the user selects a payment method
   void _confirmGooglePay() async {
     setState(() {
       isLoadingGooglePay = true;
@@ -91,7 +92,29 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       isLoadingGooglePay = false;
     });
 
+    // Show the alert pop-up to confirm payment method
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Google Pay'),
+          content: const Text('You have selected Google Pay as your payment method. \n\n'
+              'With Google Pay, you will be redirected to Google Pay to complete the payment.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // After the dialog is closed, update the selected payment method and close the page
     _selectPaymentMethod('Google Pay');
+    Navigator.pop(context, 'Google Pay');
   }
 
   void _confirmKlarnaPayment() async {
@@ -104,25 +127,64 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       isLoadingKlarna = false;
     });
 
+    // Show the alert pop-up to confirm payment method
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Klarna'),
+          content: const Text('You have selected Klarna as your payment method. \n\n'
+              'With Klarna, you will receive an invoice to your email address with the payment details.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // After the dialog is closed, update the selected payment method and close the page
     _selectPaymentMethod('Facturing (Klarna)');
+    Navigator.pop(context, 'Facturing (Klarna)');
   }
 
-  // Confirm and mask the credit card details
   void _confirmCreditCard(String number, String maskedCard) async {
     setState(() {
       isLoadingCreditCard = true;
     });
 
-    // Update the controller with the masked card number immediately
-    _creditCardController.text = _formatCreditCardNumber(maskedCard);
-
-    await Future.delayed(const Duration(seconds: 5)); // Simulate delay
-
+    await Future.delayed(const Duration(seconds: 5));
     setState(() {
       isLoadingCreditCard = false;
     });
 
+    // Show the alert pop-up to confirm payment method
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Credit Card'),
+          content: const Text('You have selected the Credit Card as your payment method. \n\n'
+              'With Credit Card, you will be able to pay with your credit card.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // After the dialog is closed, update the selected payment method and close the page
     _selectPaymentMethod('Credit Card', maskedCard);
+    Navigator.pop(context, 'Credit Card');
   }
 
   // Format the credit card number to have a space every 4 digits
