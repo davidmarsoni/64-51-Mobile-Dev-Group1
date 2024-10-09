@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:valais_roll/data/objects/payementMethod.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
-import 'package:valais_roll/src/payment/controller/payment_method_controller.dart'; // Import payment controller
+import 'package:valais_roll/src/user/payment/controller/payment_method_controller.dart'; // Import payment controller
 
 class BicycleSelectionView extends StatefulWidget {
   final LatLng startPoint;
@@ -44,10 +45,11 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
   }
 
   // Fetch the user's payment method from the database
-  Future<void> _fetchPaymentMethod() async {
+   Future<void> _fetchPaymentMethod() async {
     PaymentMethodController paymentController = PaymentMethodController();
     String? paymentMethod = await paymentController.fetchPaymentMethod();
-
+    
+    
     setState(() {
       userPaymentMethod = paymentMethod;
       isLoadingPaymentMethod = false; // Stop loading once payment method is fetched
@@ -60,16 +62,26 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       return null; // No image when there's no payment method, use an Icon fallback
     }
 
+    debugPrint('Payment method: $userPaymentMethod');
+    debugPrint('Payment method: $userPaymentMethod');
+    debugPrint('Payment method: $userPaymentMethod');
+    debugPrint('Payment method: $userPaymentMethod');
+    debugPrint('Payment method: $userPaymentMethod');
+
     // Display images based on the payment method
     switch (userPaymentMethod) {
-      case 'Google Pay':
+      case 'google_pay':
         return Image.asset('assets/png/googlePay.png', width: 30, height: 30);
-      case 'Credit Card':
+      case 'credit_card':
         return Image.asset('assets/png/mastercard.png', width: 30, height: 30);
-      case 'Facturing (Klarna)':
+      case 'klarna':
+        debugPrint('AAA');
+         debugPrint('AAA');
         return Image.asset('assets/png/klarna.png', width: 30, height: 30);
       default:
-        return null; // Fallback, no image for unknown payment methods
+       debugPrint('BBB');
+        debugPrint('BBB');
+        return null; // Fallback, empty widget for unknown payment methods
     }
   }
 
@@ -128,7 +140,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                       isFilled: true,
                       color: Colors.red,
                       horizontalPadding: 20.0,
-                      verticalPadding: 12.0,
+                      verticalPadding: 16.0,
                     ),
                     SizedBox(width: 10),
                     Button(

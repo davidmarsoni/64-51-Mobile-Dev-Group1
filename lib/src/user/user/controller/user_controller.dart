@@ -30,6 +30,7 @@ class UserController {
         email: email,
         password: password,
       );
+      print('User created: ${result.user!.uid}');
       return result.user;
     } catch (e) {
       throw FirebaseAuthException(
@@ -71,6 +72,10 @@ class UserController {
       locality: appUser.locality,
       email: appUser.email,
     );
+
+    // Add the map for the payementMethod to the firebase
+
+
     await _firestore.collection('users').doc(user.uid).set(appUser.toMap());
   }
 
@@ -244,18 +249,21 @@ class UserController {
     return null;
   }
 
-   Future<void> deleteUser(BuildContext context) async {
+  Future<void> deleteUser(BuildContext context) async {
     User? user = _auth.currentUser;
-  
+    
     if (user != null) {
       try {
-        // Attempt to delete the user
+        // Delete the user's document from Firestore first
+        await _firestore.collection('users').doc(user.uid).delete();
+    
+        // Attempt to delete the user account
         await user.delete();
       } on FirebaseAuthException catch (e) {
         if (e.code == 'requires-recent-login') {
           // Show reauthentication popup
           await _showReauthenticationPopup(context);
-  
+    
           // Retry deleting the user after reauthentication
           try {
             await user.delete();
@@ -266,9 +274,6 @@ class UserController {
           throw Exception('Failed to delete user: ${e.message}');
         }
       }
-  
-      // Delete the user's document from Firestore
-      await _firestore.collection('users').doc(user.uid).delete();
     } else {
       throw Exception('No user is currently signed in.');
     }

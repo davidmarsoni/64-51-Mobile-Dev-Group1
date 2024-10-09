@@ -181,8 +181,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         SnackBar(content: Text(message)),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred. Please try again.')),
+        ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred. Please try again. Current error: ${e.toString()}')),
       );
     }
   }

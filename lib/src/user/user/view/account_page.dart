@@ -5,7 +5,7 @@ import 'package:valais_roll/src/user/user/controller/user_controller.dart';
 import 'package:valais_roll/src/user/welcome/welcome_page.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart'; // Add this import for date formatting
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -114,11 +114,13 @@ class _AccountPageState extends State<AccountPage> {
     if (_formKey.currentState!.validate()) {
       String? validationMessage = _userController.validateField(_controllers[field]!.text, field);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(validationMessage!)),
-      );
-      return;
-    
+      if (validationMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(validationMessage)),
+        );
+        return;
+      }
+
       if (field == 'email') {
         await _changeEmail();
       } else {
@@ -263,11 +265,13 @@ class _AccountPageState extends State<AccountPage> {
     Future<void> _changeEmail() async {
     if (_formKey.currentState!.validate()) {
       String? validationMessage = _userController.validateField('email', _controllers['email']!.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(validationMessage!)),
-      );
-      return;
-      
+      if (validationMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(validationMessage)),
+        );
+        return;
+      }
+  
       try {
         String message = await _userController.changeEmail(context, _controllers['email']!.text);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -288,11 +292,13 @@ class _AccountPageState extends State<AccountPage> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    setState(() {
-      _controllers['birthDate']!.text = DateFormat('dd.MM.yyyy').format(picked!);
-      _isEditing['birthDate'] = true;
-    });
+    if (picked != null) {
+      setState(() {
+        _controllers['birthDate']!.text = DateFormat('dd.MM.yyyy').format(picked);
+        _isEditing['birthDate'] = true;
+      });
     }
+  }
 
   Future<void> _logout() async {
     await _userController.logout();
@@ -360,8 +366,10 @@ class _AccountPageState extends State<AccountPage> {
           : null,
       validator: (value) {
         String? validationMessage = _userController.validateField(controllerKey, value!);
-        return validationMessage;
-              return null;
+        if (validationMessage != null) {
+          return validationMessage;
+        }
+        return null;
       },
     );
   }
@@ -414,19 +422,17 @@ class _AccountPageState extends State<AccountPage> {
                 const SizedBox(height: 10),
                 _buildTextField('Locality', 'locality'),
                 const SizedBox(height: 20),
-
-                const Text('Payment method', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Payment Method', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Button(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/paymentApp');
+                    Navigator.of(context).pushNamed('/paymentApp');
                   },
-                  text: 'Manage payment method',
+                  text: 'Manage Payment Method',
                   isFilled: false,
                   horizontalPadding: 20,
                 ),
                 const SizedBox(height: 20),
-
                 const Text('Account Actions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Button(
@@ -436,6 +442,7 @@ class _AccountPageState extends State<AccountPage> {
                   horizontalPadding: 20,
                 ),
                 const SizedBox(height: 20),
+
 
                 const Text('Danger Zone', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
                 const SizedBox(height: 10),

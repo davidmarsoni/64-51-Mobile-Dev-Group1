@@ -5,9 +5,9 @@ class BasePage extends StatelessWidget {
   final Widget body;
 
   const BasePage({
-    Key? key,
+    super.key,
     required this.body,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

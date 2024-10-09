@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class NavigationRailComponent extends StatefulWidget {
+  const NavigationRailComponent({super.key});
+
   @override
   _NavigationRailComponentState createState() => _NavigationRailComponentState();
 }
