@@ -51,6 +51,7 @@ class WelcomePage extends StatelessWidget {
               'By creating an account in our application you acknowledge that you have read and understood, and agree to our Terms & Privacy.',
               style: TextStyle(fontSize: 14),
             ),
+
             const SizedBox(height: 20),
             SvgPicture.asset(
               'assets/svg/welcome.svg',
