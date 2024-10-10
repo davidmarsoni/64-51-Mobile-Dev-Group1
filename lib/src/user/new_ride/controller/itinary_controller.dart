@@ -19,6 +19,10 @@ class ItineraryController {
 
   final StreamController<LatLng?> _locationControllerStream = StreamController<LatLng?>.broadcast();
   Stream<LatLng?> get locationStream => _locationControllerStream.stream;
+
+  // Flag to track if the controller is disposed
+  bool _isDisposed = false;
+
   //getter for stationnames
   //List<String> get stationNames => _stationNames to lower case
   List<String> get stationNames => _stationNames.map((name) => name.toLowerCase()).toList();
@@ -41,30 +45,33 @@ class ItineraryController {
 
     loc.LocationData locationData = await _locationController.getLocation();
     _currentP = LatLng(locationData.latitude!, locationData.longitude!);
-    _locationControllerStream.add(_currentP); 
+    if (!_isDisposed) {
+      _locationControllerStream.add(_currentP);
+    }
   }
 
   Future<void> fetchStations() async {
-  QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('stations').get();
-  List<Marker> markers = snapshot.docs.map((doc) {
-    GeoPoint geoPoint = doc['Geopoint'];
-    String stationName = doc['Name'].toLowerCase().trim();  // Ensure lowercase and trim spaces
-    _stationNames.add(stationName);
+    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('stations').get();
+    List<Marker> markers = snapshot.docs.map((doc) {
+      GeoPoint geoPoint = doc['Geopoint'];
+      String stationName = doc['Name'].toLowerCase().trim();  // Ensure lowercase and trim spaces
+      _stationNames.add(stationName);
 
-    return Marker(
-      markerId: MarkerId(doc.id),
-      position: LatLng(geoPoint.latitude, geoPoint.longitude),
-      infoWindow: InfoWindow(
-        title: '${doc['Name']} | ${doc['NbrBicycle']} Bicycles',
-        snippet: doc['Description'],
-      ),
-      icon: BitmapDescriptor.defaultMarker,
-    );
-  }).toList();
-  _markers = markers;
-  _markersController.add(_markers); 
-}
-
+      return Marker(
+        markerId: MarkerId(doc.id),
+        position: LatLng(geoPoint.latitude, geoPoint.longitude),
+        infoWindow: InfoWindow(
+          title: '${doc['Name']} | ${doc['NbrBicycle']} Bicycles',
+          snippet: doc['Description'],
+        ),
+        icon: BitmapDescriptor.defaultMarker,
+      );
+    }).toList();
+    _markers = markers;
+    if (!_isDisposed) {
+      _markersController.add(_markers);
+    }
+  }
 
   void onTextChanged(String searchText, bool isStart) {
     _suggestedStations = _stationNames
@@ -73,6 +80,7 @@ class ItineraryController {
   }
 
   void dispose() {
+    _isDisposed = true;
     _markersController.close();
     _locationControllerStream.close();
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:valais_roll/data/objects/payementMethod.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';

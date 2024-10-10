@@ -53,7 +53,7 @@ class _CreditCardFormState extends State<CreditCardForm> {
   }
 
   bool _isValidCardName(String userCardName) {
-    return userCardName.length > 0 && userCardName.length < 50;
+    return userCardName.isNotEmpty && userCardName.length < 50;
   }
 
   // Mask the card number (removing spaces)

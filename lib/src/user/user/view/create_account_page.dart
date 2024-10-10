@@ -249,7 +249,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 const SizedBox(height: 20),
 
                 // Avatar Section
-                const Text('Avatar and Username', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Username for the application', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 _buildTextField('Username', 'username', autofillHints: [AutofillHints.username]),
                 const SizedBox(height: 20),
