@@ -74,8 +74,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     });
     // Show a snackbar or dialog to confirm the deletion
     _showSnackBar(context, 'Payment Method Deleted');
-    // Navigate back to the account page
-    Navigator.pushReplacementNamed(context, '/account');
+    // Navigate back to the account page pop the current page
+    Navigator.pop(context);
   }
 
   // Method to show a snackbar
@@ -97,14 +97,14 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop(); 
               },
             ),
             TextButton(
               child: const Text('Delete'),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _deletePaymentMethod(); // Call the delete method
+                Navigator.of(context).pop(); 
+                _deletePaymentMethod(); 
               },
             ),
           ],
@@ -146,7 +146,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
     // After the dialog is closed, update the selected payment method and close the page
     _selectPaymentMethod(PaymentData(paymentMethod: PaymentMethod.googlePay.name));
-    Navigator.pushReplacementNamed(context, '/home');
+    Navigator.pop(context);
   }
 
   void _confirmKlarnaPayment() async {
@@ -181,7 +181,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
     // After the dialog is closed, update the selected payment method and close the page
     _selectPaymentMethod(PaymentData(paymentMethod: PaymentMethod.klarna.name));
-    Navigator.pushReplacementNamed(context, '/home');
+    Navigator.pop(context);
   }
 
   void _confirmCreditCard(PaymentData payementData) async {
@@ -217,7 +217,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     // After the dialog is closed, update the selected payment method and close the page
     payementData.paymentMethod = PaymentMethod.creditCard.name;
     _selectPaymentMethod( payementData);
-    Navigator.pushReplacementNamed(context, '/home');
+    Navigator.pop(context);
   }
 
   // Format the credit card number to have a space every 4 digits
