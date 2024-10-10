@@ -299,4 +299,20 @@ class UserController {
       );
     }
   }
+
+  Future<String?> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      debugPrint('Password reset email sent');
+      return 'Password reset email sent';
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Failed to send password reset email: ${e.message}');
+      if (e.code == 'user-not-found') {
+        return 'No user found for that email.';
+      }
+      return getErrorMessage(e);
+    } catch (e) {
+      return 'An unknown error occurred.';
+    }
+  }
 }

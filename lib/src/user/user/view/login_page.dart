@@ -50,13 +50,13 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _currentUser = user;
         });
-        if(!widget.isReauthentication) {
+        if (!widget.isReauthentication) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Login successful')),
           );
         }
         if (widget.isReauthentication) {
-          Navigator.pop(context, true); 
+          Navigator.pop(context, true);
         } else {
           Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
         }
@@ -90,6 +90,54 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
+  void _resetPassword() async {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your email to reset password')),
+      );
+      return;
+    }
+
+    String? message = await _userController.resetPassword(_emailController.text);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message ?? 'An unknown error occurred.')),
+    );
+  }
+
+  void _showResetPasswordDialog() {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your email to reset password')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Reset Password'),
+          content: const Text('Are you sure you want to reset your password?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Confirm'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _resetPassword();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BasePage(
@@ -97,8 +145,8 @@ class _LoginPageState extends State<LoginPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start, 
-          crossAxisAlignment: CrossAxisAlignment.start, 
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.isReauthentication ? 'Reauthentication' : 'Login',
@@ -121,8 +169,8 @@ class _LoginPageState extends State<LoginPage> {
             if (_currentUser != null && !widget.isReauthentication) ...[
               const SizedBox(height: 20),
               Text('You are already logged as: ${_currentUser!.email}',
-                style: const TextStyle(fontSize: 18)),
-              const SizedBox(height: 8), 
+                  style: const TextStyle(fontSize: 18)),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Button(
@@ -138,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
               Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextFormField(
                       controller: _emailController,
@@ -203,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: RichText(
-                        textAlign: TextAlign.left, 
+                        textAlign: TextAlign.left,
                         text: TextSpan(
                           text: "If you don't have an account yet, please create your account ",
                           style: const TextStyle(color: Colors.black, fontSize: 14),
@@ -230,7 +278,18 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: _loginWithEmail,
                         text: 'Login',
                       ),
-                    ),   
+                    ),
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _showResetPasswordDialog,
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
