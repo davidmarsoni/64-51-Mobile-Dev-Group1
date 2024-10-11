@@ -4,11 +4,53 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class TopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final VoidCallback? onBackButtonPressed;
+  final bool showConfirmationDialog;
+  final String confirmationDialogText;
 
-  const TopBar({super.key, this.title = 'ValaisRoll'});
+  const TopBar({
+    super.key,
+    this.title = 'ValaisRoll',
+    this.onBackButtonPressed,
+    this.showConfirmationDialog = false,
+    this.confirmationDialogText = 'Do you really want to leave this page? Any unsaved changes will be lost.',
+  });
 
   bool _isCurrentRoute(BuildContext context, String routeName) {
     return ModalRoute.of(context)?.settings.name == routeName;
+  }
+
+  Future<void> _handleBackButtonPressed(BuildContext context) async {
+    if (showConfirmationDialog) {
+      bool shouldLeave = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Exit'),
+          content: Text(confirmationDialogText),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Confim'),
+            ),
+          ],
+        ),
+      );
+      if (shouldLeave) {
+        if (onBackButtonPressed != null) {
+          onBackButtonPressed!();
+        }
+        Navigator.pop(context);
+      }
+    } else {
+      if (onBackButtonPressed != null) {
+        onBackButtonPressed!();
+      }
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -29,9 +71,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       leading: canPop
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => _handleBackButtonPressed(context),
               tooltip: 'Back',
             )
           : null,

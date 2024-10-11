@@ -57,6 +57,7 @@ class _AccountPageState extends State<AccountPage> {
   };
 
   late AppUser _currentUser;
+  bool _hasUnsavedChanges = false;
 
   @override
   void initState() {
@@ -67,6 +68,7 @@ class _AccountPageState extends State<AccountPage> {
         if (focusNode.hasFocus) {
           setState(() {
             _isEditing[key] = true;
+            _hasUnsavedChanges = true; // Update _hasUnsavedChanges when a field gains focus
           });
         }
       });
@@ -107,6 +109,7 @@ class _AccountPageState extends State<AccountPage> {
   void _toggleEditing(String field) {
     setState(() {
       _isEditing[field] = !_isEditing[field]!;
+      _hasUnsavedChanges = true;
     });
   }
 
@@ -142,6 +145,7 @@ class _AccountPageState extends State<AccountPage> {
         setState(() {
           _currentUser = updatedUser;
           _isEditing[field] = false;
+          _hasUnsavedChanges = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -262,7 +266,7 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-    Future<void> _changeEmail() async {
+  Future<void> _changeEmail() async {
     if (_formKey.currentState!.validate()) {
       String? validationMessage = _userController.validateField('email', _controllers['email']!.text);
       if (validationMessage != null) {
@@ -296,6 +300,7 @@ class _AccountPageState extends State<AccountPage> {
       setState(() {
         _controllers['birthDate']!.text = DateFormat('dd.MM.yyyy').format(picked);
         _isEditing['birthDate'] = true;
+        _hasUnsavedChanges = true;
       });
     }
   }
@@ -303,30 +308,30 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _logout() async {
     await _userController.logout();
     // Redirect to welcome page
-   Navigator.of(context).pushAndRemoveUntil(
+    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => WelcomePage()),
       (Route<dynamic> route) => false,
     );
   }
 
- Future<void> _deleteAccount() async {
-  bool confirmed = await showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete Account'),
-      content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
+  Future<void> _deleteAccount() async {
+    bool confirmed = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
 
     if (confirmed) {
       try {
@@ -336,11 +341,35 @@ class _AccountPageState extends State<AccountPage> {
           const SnackBar(content: Text('Account deleted successfully')),
         );
       } catch (e) {
-         ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
       }
     }
+  }
+
+  Future<bool> _onBackButtonPressed() async {
+    if (_hasUnsavedChanges) {
+      bool shouldLeave = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Exit'),
+          content: const Text('Do you really want to leave this page? Any unsaved changes will be lost.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return shouldLeave;
+    }
+    return true;
   }
 
   Widget _buildTextField(String label, String controllerKey) {
@@ -385,8 +414,28 @@ class _AccountPageState extends State<AccountPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                  const Text('Personal Information', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const Text('Personal Information', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
+                const Text('Account Actions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Button(
+                  onPressed: _logout,
+                  text: 'Logout',
+                  isFilled: false,
+                  horizontalPadding: 20,
+                ),
+                const SizedBox(height: 20),
+                const Text('Payment Method', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Button(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/paymentApp');
+                  },
+                  text: 'Manage Payment Method',
+                  isFilled: false,
+                  horizontalPadding: 20,
+                ),
+                const SizedBox(height: 20),
                 const Text('Personal Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 _buildTextField('Name', 'name'),
@@ -422,28 +471,6 @@ class _AccountPageState extends State<AccountPage> {
                 const SizedBox(height: 10),
                 _buildTextField('Locality', 'locality'),
                 const SizedBox(height: 20),
-                const Text('Payment Method', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                Button(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/paymentApp');
-                  },
-                  text: 'Manage Payment Method',
-                  isFilled: false,
-                  horizontalPadding: 20,
-                ),
-                const SizedBox(height: 20),
-                const Text('Account Actions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                Button(
-                  onPressed: _logout,
-                  text: 'Logout',
-                  isFilled: false,
-                  horizontalPadding: 20,
-                ),
-                const SizedBox(height: 20),
-
-
                 const Text('Danger Zone', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
                 const SizedBox(height: 10),
                 Button(
@@ -459,6 +486,8 @@ class _AccountPageState extends State<AccountPage> {
         ),
       ),
       isBottomNavBarEnabled: false,
+      showConfirmationDialog: _hasUnsavedChanges,
+      confirmationDialogText: 'Do you really want to leave this page? Any unsaved changes will be lost.',
     );
   }
 }

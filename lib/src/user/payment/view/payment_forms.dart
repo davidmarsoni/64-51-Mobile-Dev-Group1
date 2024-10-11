@@ -186,6 +186,7 @@ class _CreditCardNumberFormatter extends TextInputFormatter {
 }
 
 // Custom Formatter for Expiry Date (MM/YY)
+
 class _ExpiryDateFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
@@ -201,8 +202,8 @@ class _ExpiryDateFormatter extends TextInputFormatter {
     }
 
     // Handle backspace deletion of '/' character
-    if (oldValue.text.length == 4 && newValue.text.length == 3) {
-      newText = newText.substring(0, 2);
+    if (oldValue.text.length > newValue.text.length && oldValue.text.contains('/') && !newValue.text.contains('/')) {
+      newText = newText.substring(0, newText.length - 1);
     }
 
     return newValue.copyWith(
