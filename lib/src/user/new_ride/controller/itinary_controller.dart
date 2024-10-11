@@ -50,6 +50,11 @@ class ItineraryController {
     }
   }
 
+  Future<LatLng> getPosition() async {
+    loc.LocationData locationData = await _locationController.getLocation();
+    return LatLng(locationData.latitude!, locationData.longitude!);
+  }
+
   Future<void> fetchStations() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('stations').get();
     List<Marker> markers = snapshot.docs.map((doc) {

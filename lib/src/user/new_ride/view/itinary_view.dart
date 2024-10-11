@@ -89,8 +89,10 @@ class _ItineraryPageState extends State<ItineraryPage> {
         setState(() {
           if (isStart) {
             _startLatLng = matchingMarker.position;
+            _approvedStartStation = matchingMarker.infoWindow.title!.split('|')[0]; // Set the approved station
           } else {
             _destinationLatLng = matchingMarker.position;
+            _approvedDestinationStation = matchingMarker.infoWindow.title!.split('|')[0]; // Set the approved station
           }
         });
 
@@ -98,7 +100,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
         return;
       }
 
-      // Try geocoding the input as a city name if it's not a station
+      // Geocode the input as a city name if not a station
       try {
         List<Location> locations = await locationFromAddress(query);
         if (locations.isNotEmpty) {
@@ -112,8 +114,10 @@ class _ItineraryPageState extends State<ItineraryPage> {
           setState(() {
             if (isStart) {
               _startLatLng = latLng;
+              _approvedStartStation = null; // Clear approval if it's not a station
             } else {
               _destinationLatLng = latLng;
+              _approvedDestinationStation = null; // Clear approval if it's not a station
             }
           });
 
@@ -124,6 +128,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +244,28 @@ class _ItineraryPageState extends State<ItineraryPage> {
                 label: Text('Validate your itinerary'),
               ),
             ),
+
+          // Button to recenter the map to the user's current location
+          Positioned(
+            bottom: 30,
+            left: 16,
+            child: FloatingActionButton(
+              heroTag: "recenterButton",
+              onPressed: () async {
+                LatLng? currentLocation = await _itineraryController.getPosition();
+                if (currentLocation != null) {
+                  final GoogleMapController controller = await _mapController.future;
+                  controller.animateCamera(CameraUpdate.newCameraPosition(
+                    CameraPosition(target: currentLocation, zoom: 14.0),
+                  ));
+                } else {
+                  _showErrorMessage("Unable to fetch current location.");
+                }
+              },
+              child: Icon(Icons.my_location),
+              mini: true, // Optional to make it smaller
+            ),
+          ),
         ],
       ),
     );
@@ -264,7 +291,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     setState(() {
                       _startLatLng = stationPosition;
                       _startController.text = stationName;
-                      _approvedStartStation = stationName;
+                      _approvedStartStation = stationName; // Approve the station
 
                       // Hide the approval icon after 1 second
                       Timer(Duration(seconds: 1), () {
@@ -287,7 +314,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     setState(() {
                       _destinationLatLng = stationPosition;
                       _destinationController.text = stationName;
-                      _approvedDestinationStation = stationName;
+                      _approvedDestinationStation = stationName; // Approve the station
 
                       // Hide the approval icon after 1 second
                       Timer(Duration(seconds: 1), () {
@@ -308,6 +335,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
     );
   }
 
+
   // Check if both the start and destination are valid stations and show the button
   void _checkIfBothLocationsAreStations() {
     setState(() {
@@ -324,6 +352,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
           orElse: () => Marker(markerId: MarkerId('default')),
         );
         _startLatLng = matchingStartMarker.position;
+        _approvedStartStation = matchingStartMarker.infoWindow.title!.split('|')[0]; // Approve the station
       }
 
       if (destinationIsValid) {
@@ -332,6 +361,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
           orElse: () => Marker(markerId: MarkerId('default')),
         );
         _destinationLatLng = matchingDestinationMarker.position;
+        _approvedDestinationStation = matchingDestinationMarker.infoWindow.title!.split('|')[0]; // Approve the station
       }
 
       // Show the button only if both stations are valid and coordinates are available
@@ -340,6 +370,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
       _isDestinationValid = destinationIsValid;
     });
   }
+
 
   // Reset the approval icon if the text in the start or destination field is invalid
   void _resetApprovalIconIfNeeded(bool isStart) {
