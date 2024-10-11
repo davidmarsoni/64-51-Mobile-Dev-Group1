@@ -1,10 +1,4 @@
-enum PaymentMethod {
-  creditCard,
-  googlePay,
-  klarna,
-  other,
-  notSet
-}
+import 'package:valais_roll/data/enums/payement_data.dart';
 
 extension PaymentMethodExtension on PaymentMethod {
   String get name {

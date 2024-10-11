@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:valais_roll/data/objects/payementData.dart';
-import 'package:valais_roll/data/objects/payementMethod.dart';
+import 'package:valais_roll/data/enums/payement_data.dart';
+import 'package:valais_roll/data/objects/payement_data.dart';
+import 'package:valais_roll/data/objects/payment_method_extension.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/user/payment/controller/payment_method_controller.dart';
 import 'package:valais_roll/src/user/payment/view/payment_forms.dart'; // Make sure this import is present

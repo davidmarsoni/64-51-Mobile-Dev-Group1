@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:valais_roll/data/objects/payementData.dart';
+import 'package:valais_roll/data/objects/payement_data.dart';
 
 class PaymentMethodController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
