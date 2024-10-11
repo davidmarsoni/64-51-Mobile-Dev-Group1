@@ -23,6 +23,12 @@ class _ItineraryPageState extends State<ItineraryPage> {
   LatLng? _destinationLatLng;
   CameraPosition? _initialPosition;
   bool showButton = false;
+  bool _isStartValid = false;
+  bool _isDestinationValid = false;
+
+  // Variables to track approved station for start and destination
+  String? _approvedStartStation;
+  String? _approvedDestinationStation;
 
   @override
   void initState() {
@@ -50,9 +56,11 @@ class _ItineraryPageState extends State<ItineraryPage> {
     // Listeners for text field changes to check for valid stations
     _startController.addListener(() {
       _checkIfBothLocationsAreStations();
+      _resetApprovalIconIfNeeded(true);
     });
     _destinationController.addListener(() {
       _checkIfBothLocationsAreStations();
+      _resetApprovalIconIfNeeded(false);
     });
   }
 
@@ -64,23 +72,20 @@ class _ItineraryPageState extends State<ItineraryPage> {
     super.dispose();
   }
 
-  // Search either city or station and zoom to the location
+  // Method to search for either start or destination and set coordinates
   Future<void> _performSearch(bool isStart) async {
     String query = isStart ? _startController.text : _destinationController.text;
 
     if (query.isNotEmpty) {
-      // Convert query to lowercase and trim spaces to match station names
       String normalizedQuery = query.toLowerCase().trim();
 
       // Check if the input matches a station name
       if (_itineraryController.stationNames.contains(normalizedQuery)) {
-        // Find the corresponding station marker by name
         Marker? matchingMarker = _itineraryController.markers.firstWhere(
           (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == normalizedQuery,
           orElse: () => Marker(markerId: MarkerId('default')),
         );
 
-        // Set the corresponding LatLng based on whether it's the start or destination
         setState(() {
           if (isStart) {
             _startLatLng = matchingMarker.position;
@@ -89,43 +94,32 @@ class _ItineraryPageState extends State<ItineraryPage> {
           }
         });
 
-        // Zoom to the location on the map
-        final GoogleMapController controller = await _mapController.future;
-        controller.animateCamera(CameraUpdate.newCameraPosition(
-          CameraPosition(target: matchingMarker.position, zoom: 12.0),
-        ));
-
-        // Check if both start and destination are valid stations
         _checkIfBothLocationsAreStations();
-        return; // Stop further execution as it's a valid station
+        return;
       }
 
-      // If the query is not a station, try geocoding the input as a city name
+      // Try geocoding the input as a city name if it's not a station
       try {
         List<Location> locations = await locationFromAddress(query);
         if (locations.isNotEmpty) {
           LatLng latLng = LatLng(locations.first.latitude, locations.first.longitude);
 
-          // Move the map camera to the city location
           final GoogleMapController controller = await _mapController.future;
           controller.animateCamera(CameraUpdate.newCameraPosition(
             CameraPosition(target: latLng, zoom: 12.0),
           ));
 
-          // Set the LatLng as start or destination depending on the input
           setState(() {
             if (isStart) {
-              _startLatLng = latLng; // Set start location to city coordinates
+              _startLatLng = latLng;
             } else {
-              _destinationLatLng = latLng; // Set destination location to city coordinates
+              _destinationLatLng = latLng;
             }
           });
 
-          // Check if both start and destination have valid LatLngs
           _checkIfBothLocationsAreStations();
         }
       } catch (e) {
-        // Show error message if geocoding fails
         _showErrorMessage("Location not found: $query");
       }
     }
@@ -150,8 +144,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
                       _itineraryController.markers.map((marker) {
                         return marker.copyWith(
                           onTapParam: () => _onStationMarkerTapped(
-                            marker.infoWindow.title!.split('|')[0],  // Station name
-                            marker.position,  // Station coordinates
+                            marker.infoWindow.title!.split('|')[0],
+                            marker.position,
                           ),
                         );
                       }),
@@ -159,7 +153,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     polylines: Set<Polyline>.of(_itineraryController.polylines.values),
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
-                    mapType: MapType.normal, // Ensure mapType is set
+                    mapType: MapType.normal,
                   ),
           ),
 
@@ -178,7 +172,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                         decoration: InputDecoration(
                           labelText: 'Start',
                           filled: true,
-                          fillColor: Colors.grey[200],
+                          fillColor: _isStartValid ? Color.fromARGB(255, 194, 225, 169) : Colors.grey[200],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -186,7 +180,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                           prefixIcon: IconButton(
                             icon: Icon(Icons.search),
                             onPressed: () {
-                              _performSearch(true);  // Trigger search for start
+                              _performSearch(true);
                             },
                           ),
                         ),
@@ -199,7 +193,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                         decoration: InputDecoration(
                           labelText: 'Destination',
                           filled: true,
-                          fillColor: Colors.grey[200],
+                          fillColor: _isDestinationValid ? Color.fromARGB(255, 194, 225, 169) : Colors.grey[200],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -207,7 +201,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                           prefixIcon: IconButton(
                             icon: Icon(Icons.search),
                             onPressed: () {
-                              _performSearch(false);  // Trigger search for destination
+                              _performSearch(false);
                             },
                           ),
                         ),
@@ -225,7 +219,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
             Positioned(
               bottom: 30,
               right: 30,
-                child: FloatingActionButton.extended(
+              child: FloatingActionButton.extended(
                 onPressed: () {
                   if (_startLatLng != null && _destinationLatLng != null) {
                     Navigator.push(
@@ -250,17 +244,80 @@ class _ItineraryPageState extends State<ItineraryPage> {
     );
   }
 
+  // Handle when a station marker is tapped
+  void _onStationMarkerTapped(String stationName, LatLng stationPosition) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text('Select as Start Station'),
+                  subtitle: Text('Station: $stationName'),
+                  trailing: _approvedStartStation == stationName
+                      ? Icon(Icons.check_circle, color: Colors.green)
+                      : null,
+                  onTap: () {
+                    setState(() {
+                      _startLatLng = stationPosition;
+                      _startController.text = stationName;
+                      _approvedStartStation = stationName;
+
+                      // Hide the approval icon after 1 second
+                      Timer(Duration(seconds: 1), () {
+                        setState(() {
+                          _approvedStartStation = null;
+                        });
+                      });
+                      Navigator.pop(context);
+                    });
+                    _checkIfBothLocationsAreStations();
+                  },
+                ),
+                ListTile(
+                  title: Text('Select as Destination Station'),
+                  subtitle: Text('Station: $stationName'),
+                  trailing: _approvedDestinationStation == stationName
+                      ? Icon(Icons.check_circle, color: Colors.green)
+                      : null,
+                  onTap: () {
+                    setState(() {
+                      _destinationLatLng = stationPosition;
+                      _destinationController.text = stationName;
+                      _approvedDestinationStation = stationName;
+
+                      // Hide the approval icon after 1 second
+                      Timer(Duration(seconds: 1), () {
+                        setState(() {
+                          _approvedDestinationStation = null;
+                        });
+                      });
+                      Navigator.pop(context);
+                    });
+                    _checkIfBothLocationsAreStations();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   // Check if both the start and destination are valid stations and show the button
   void _checkIfBothLocationsAreStations() {
     setState(() {
-      // Ensure both the input and station names are lowercased and trimmed
       String startInput = _startController.text.toLowerCase().trim();
       String destinationInput = _destinationController.text.toLowerCase().trim();
 
       bool startIsValid = _itineraryController.stationNames.contains(startInput);
       bool destinationIsValid = _itineraryController.stationNames.contains(destinationInput);
 
-      // If start or destination is valid, update their respective LatLngs
+      // Update start and destination LatLngs if valid
       if (startIsValid) {
         Marker? matchingStartMarker = _itineraryController.markers.firstWhere(
           (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == startInput,
@@ -277,9 +334,27 @@ class _ItineraryPageState extends State<ItineraryPage> {
         _destinationLatLng = matchingDestinationMarker.position;
       }
 
-      // Show button only if both fields contain valid station names and coordinates
+      // Show the button only if both stations are valid and coordinates are available
       showButton = startIsValid && destinationIsValid && _startLatLng != null && _destinationLatLng != null;
+      _isStartValid = startIsValid;
+      _isDestinationValid = destinationIsValid;
     });
+  }
+
+  // Reset the approval icon if the text in the start or destination field is invalid
+  void _resetApprovalIconIfNeeded(bool isStart) {
+    String input = isStart ? _startController.text.toLowerCase().trim() : _destinationController.text.toLowerCase().trim();
+    bool isValid = _itineraryController.stationNames.contains(input);
+
+    if (!isValid) {
+      setState(() {
+        if (isStart) {
+          _approvedStartStation = null;
+        } else {
+          _approvedDestinationStation = null;
+        }
+      });
+    }
   }
 
   // Show error messages
@@ -288,43 +363,5 @@ class _ItineraryPageState extends State<ItineraryPage> {
       content: Text(message),
       duration: Duration(seconds: 3),
     ));
-  }
-
-  // Handle when a station marker is tapped
-  void _onStationMarkerTapped(String stationName, LatLng stationPosition) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text('Select as Start Station'),
-              subtitle: Text('Station: $stationName'),
-              onTap: () {
-                setState(() {
-                  _startLatLng = stationPosition;
-                  _startController.text = stationName;
-                  Navigator.pop(context);
-                });
-                _checkIfBothLocationsAreStations();  // Check after selecting the station
-              },
-            ),
-            ListTile(
-              title: Text('Select as Destination Station'),
-              subtitle: Text('Station: $stationName'),
-              onTap: () {
-                setState(() {
-                  _destinationLatLng = stationPosition;
-                  _destinationController.text = stationName;
-                  Navigator.pop(context);
-                });
-                _checkIfBothLocationsAreStations();  // Check after selecting the station
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 }
