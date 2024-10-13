@@ -75,8 +75,7 @@ class UserController {
 
     // Add the map for the payementMethod to the firebase
 
-
-    await _firestore.collection('users').doc(user.uid).set(appUser.toMap());
+    await _firestore.collection('users').doc(user.uid).set(appUser.toJson());
   }
 
   // Error handling

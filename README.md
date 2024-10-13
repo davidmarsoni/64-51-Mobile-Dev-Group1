@@ -31,7 +31,7 @@ GOOGLE_MAPS_API_KEY=your_google_api_key
 
 2. go to the firestore database and add a new collection named `owners` and add a new document with a random id and the following content:
 
-```json
+```text
 uid: "the_uid_of_the_user"
 ```
 
