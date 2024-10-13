@@ -1,18 +1,26 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Station {
-  String location;
-  String address;
-  List<String> bikeReferences;
+  final String? id;
+  final String? name;
+  final GeoPoint? coordinates;
+  final String? address;
+  final List<String> bikeReferences;
 
   Station({
-    required this.location,
-    required this.address,
-    required this.bikeReferences,
+    this.id,
+    this.name,
+    this.coordinates,
+    this.address,
+    this.bikeReferences = const [],
   });
 
   // Method to convert Station object to JSON
   Map<String, dynamic> toJson() {
     return {
-      'location': location,
+      'id': id,
+      'name': name,
+      'coordinates': coordinates,
       'address': address,
       'bikeReferences': bikeReferences,
     };
@@ -21,9 +29,11 @@ class Station {
   // Method to create Station object from JSON
   factory Station.fromJson(Map<String, dynamic> json) {
     return Station(
-      location: json['location'],
-      address: json['address'],
-      bikeReferences: List<String>.from(json['bikeReferences']),
+      id: json['id'],
+      name: json['name'] ?? 'Unknown Name',
+      coordinates: json['coordinates'],
+      address: json['address'] ?? 'Unknown Address',
+      bikeReferences: json['bikeReferences'] != null ? List<String>.from(json['bikeReferences']) : [],
     );
   }
 }

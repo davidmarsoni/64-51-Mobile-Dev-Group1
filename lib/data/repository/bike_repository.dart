@@ -1,120 +1,113 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/Bike.dart';
-import 'package:valais_roll/data/enums/Status.dart';
+import 'package:valais_roll/data/enums/BikeState.dart';
 
 class BikeRepository {
   final CollectionReference _bikesCollection = FirebaseFirestore.instance.collection('bikes');
 
   // Add a new bike
-  Future<String> addBike(Bike bike, BuildContext context) async {
+  Future<String> addBike(Bike bike) async {
     try {
       await _bikesCollection.add(bike.toJson());
       return 'Bike added successfully';
     } catch (e) {
-      _showSnackBar(context, 'Error adding bike: $e');
       return 'Error adding bike: $e';
     }
   }
 
   // Update an existing bike
-  Future<String> updateBike(String id, Bike bike, BuildContext context) async {
+  Future<String> updateBike(String id, Bike bike) async {
     try {
       await _bikesCollection.doc(id).update(bike.toJson());
       return 'Bike updated successfully';
     } catch (e) {
-      _showSnackBar(context, 'Error updating bike: $e');
       return 'Error updating bike: $e';
     }
   }
 
   // Delete a bike
-  Future<String> deleteBike(String id, BuildContext context) async {
+  Future<String> deleteBike(String id) async {
     try {
       await _bikesCollection.doc(id).delete();
       return 'Bike deleted successfully';
     } catch (e) {
-      _showSnackBar(context, 'Error deleting bike: $e');
       return 'Error deleting bike: $e';
     }
   }
 
   // Get a bike by ID
-  Future<Bike?> getBikeById(String id, BuildContext context) async {
+  Future<Bike?> getBikeById(String id) async {
     try {
       DocumentSnapshot doc = await _bikesCollection.doc(id).get();
       if (doc.exists) {
         return Bike.fromJson(doc.data() as Map<String, dynamic>);
       }
     } catch (e) {
-      _showSnackBar(context, 'Error getting bike: $e');
+      print('Error getting bike: $e');
     }
     return null;
   }
 
   // Get all bikes
-  Future<List<Bike>> getAllBikes(BuildContext context) async {
+  Future<List<Bike>> getAllBikes() async {
     try {
       QuerySnapshot querySnapshot = await _bikesCollection.get();
       return querySnapshot.docs.map((doc) => Bike.fromJson(doc.data() as Map<String, dynamic>)).toList();
     } catch (e) {
-      _showSnackBar(context, 'Error getting bikes: $e');
+      print('Error getting bikes: $e');
       return [];
     }
   }
 
   // Get only available bikes (operational)
-  Future<List<Bike>> getAvailableBikes(BuildContext context) async {
+  Future<List<Bike>> getAvailableBikes() async {
     try {
       QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
       return querySnapshot.docs.map((doc) => Bike.fromJson(doc.data() as Map<String, dynamic>)).toList();
     } catch (e) {
-      _showSnackBar(context, 'Error getting available bikes: $e');
+      print('Error getting available bikes: $e');
       return [];
     }
   }
 
   // Count available bikes (operational)
-  Future<int> countAvailableBikes(BuildContext context) async {
+  Future<int> countAvailableBikes() async {
     try {
       QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
       return querySnapshot.docs.length;
     } catch (e) {
-      _showSnackBar(context, 'Error counting available bikes: $e');
+      print('Error counting available bikes: $e');
       return 0;
     }
   }
 
-  // Set bike status to damaged
-  Future<String> setBikeStatusDamaged(String id, BuildContext context) async {
-    return _setBikeStatus(id, Status.damaged, context);
+  // Set bike status to available
+  Future<String> setBikeStatusAvailable(String id) async {
+    return _setBikeStatus(id, BikeState.available);
   }
 
-  // Set bike status to repair
-  Future<String> setBikeStatusRepair(String id, BuildContext context) async {
-    return _setBikeStatus(id, Status.repair, context);
+  // Set bike status to inUse
+  Future<String> setBikeStatusInUse(String id) async {
+    return _setBikeStatus(id, BikeState.inUse);
   }
 
-  // Set bike status to operational
-  Future<String> setBikeStatusOperational(String id, BuildContext context) async {
-    return _setBikeStatus(id, Status.operational, context);
+  // Set bike status to maintenance
+  Future<String> setBikeStatusMaintenance(String id) async {
+    return _setBikeStatus(id, BikeState.maintenance);
+  }
+
+  // Set bike status to lost
+  Future<String> setBikeStatusLost(String id) async {
+    return _setBikeStatus(id, BikeState.lost);
   }
 
   // Helper method to set bike status
-  Future<String> _setBikeStatus(String id, Status status, BuildContext context) async {
+  Future<String> _setBikeStatus(String id, BikeState status) async {
     try {
       await _bikesCollection.doc(id).update({'status': status.toString().split('.').last});
       return 'Bike status updated to ${status.toString().split('.').last}';
     } catch (e) {
-      _showSnackBar(context, 'Error updating bike status: $e');
       return 'Error updating bike status: $e';
     }
-  }
-
-  // Helper method to show SnackBar
-  void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 }

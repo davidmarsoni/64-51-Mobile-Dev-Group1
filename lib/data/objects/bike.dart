@@ -1,15 +1,19 @@
-import 'package:valais_roll/data/enums/Status.dart';
+import 'package:valais_roll/data/enums/BikeState.dart';
 
 class Bike {
+  String? id; // Add an ID field
   String name;
   String model;
-  Status status;
+  String number;
+  BikeState bike_state;
   String stationReference;
 
   Bike({
+    this.id,
     required this.name,
     required this.model,
-    required this.status,
+    required this.number,
+    required this.bike_state,
     required this.stationReference,
   });
 
@@ -18,7 +22,8 @@ class Bike {
     return {
       'name': name,
       'model': model,
-      'status': status.toString().split('.').last,
+      'number': number,
+      'bike_state': bike_state.toString().split('.').last,
       'stationReference': stationReference,
     };
   }
@@ -26,9 +31,11 @@ class Bike {
   // Method to create Bike object from JSON
   factory Bike.fromJson(Map<String, dynamic> json) {
     return Bike(
+      id: json['id'],
       name: json['name'],
       model: json['model'],
-      status: Status.values.firstWhere((e) => e.toString() == 'Status.${json['status']}'),
+      number: json['number'],
+      bike_state: BikeState.values.firstWhere((e) => e.toString().split('.').last == json['bike_state']),
       stationReference: json['stationReference'],
     );
   }
