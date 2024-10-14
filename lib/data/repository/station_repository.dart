@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:valais_roll/data/objects/Station.dart';
 
 class StationRepository {
-  final CollectionReference _stationsCollection = FirebaseFirestore.instance.collection('stations');
+  final CollectionReference _stationsCollection = FirebaseFirestore.instance.collection('stations_test');
 
   Future<List<Station>> getAllStations() async {
     try {
@@ -11,7 +11,6 @@ class StationRepository {
       return querySnapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id; // Add the document ID to the data
-        debugPrint('Fetched station data: $data'); // Debugging statement
         return Station.fromJson(data);
       }).toList();
     } catch (e) {

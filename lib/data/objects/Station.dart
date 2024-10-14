@@ -3,14 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Station {
   final String? id;
   final String? name;
-  final GeoPoint? coordinates;
+  final GeoPoint coordinates;
   final String? address;
   final List<String> bikeReferences;
 
   Station({
     this.id,
     this.name,
-    this.coordinates,
+    required this.coordinates,
     this.address,
     this.bikeReferences = const [],
   });
