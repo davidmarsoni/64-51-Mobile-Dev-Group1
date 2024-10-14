@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:valais_roll/data/objects/Station.dart';
 import 'package:valais_roll/src/owner/controller/owner_stations_controller.dart';
 import 'package:valais_roll/src/owner/widgets/base_page.dart';
+import 'package:valais_roll/src/widgets/button.dart';
 
 class OwnerStationPage extends StatefulWidget {
   const OwnerStationPage({super.key});
@@ -22,61 +23,88 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
   final _bikeReferencesController = TextEditingController();
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
+  final _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => OwnerStationsController(),
-      child: BasePage(
-        body: Scaffold(
-          appBar: AppBar(
-            title: Row(
-              children: [
-                Text('Stations'),
-                Spacer(),
-                OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      isViewMode = false;
-                      isEditMode = false;
-                      _clearFormFields();
-                    });
-                  },
-                  child: Text('Add Station'),
-                ),
-              ],
+      builder: (context, child) {
+        return BasePage(
+          body: Scaffold(
+            appBar: AppBar(
+              title: Row(
+                children: [
+                  Text('Stations'),
+                  Spacer(),
+                  OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        isViewMode = false;
+                        isEditMode = false;
+                        _clearFormFields();
+                      });
+                    },
+                    child: Text('Add Station'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          body: Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          labelText: 'Search',
-                          border: OutlineInputBorder(),
+            body: Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                decoration: InputDecoration(
+                                  labelText: 'Search',
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (value) {
+                                  Provider.of<OwnerStationsController>(context, listen: false).updateSearchQuery(value);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Button(
+                              onPressed: () {
+                                Provider.of<OwnerStationsController>(context, listen: false).updateSearchQuery(_searchController.text);
+                              },
+                              text: 'Search',
+                              horizontalPadding: 15,
+                              verticalPadding: 22,
+                            ),
+                          ],
                         ),
-                        onChanged: (value) {
-                          Provider.of<OwnerStationsController>(context, listen: false).updateSearchQuery(value);
-                        },
                       ),
-                    ),
-                    Expanded(
-                      child: Consumer<OwnerStationsController>(
-                        builder: (context, controller, child) {
-                          return ListView.builder(
-                            itemCount: controller.filteredStations.length,
-                            itemBuilder: (context, index) {
-                              final station = controller.filteredStations[index];
-                              return ListTile(
-                                title: Text(station.name ?? 'Unknown Name'),
-                                trailing: IconButton(
-                                  icon: Icon(Icons.arrow_forward),
-                                  onPressed: () {
+                      Expanded(
+                        child: Consumer<OwnerStationsController>(
+                          builder: (context, controller, child) {
+                            return ListView.builder(
+                              itemCount: controller.filteredStations.length,
+                              itemBuilder: (context, index) {
+                                final station = controller.filteredStations[index];
+                                return ListTile(
+                                  title: Text(station.name ?? 'Unknown Name'),
+                                  trailing: IconButton(
+                                    icon: Icon(Icons.arrow_forward),
+                                    onPressed: () {
+                                      setState(() {
+                                        isViewMode = true;
+                                        isEditMode = false;
+                                        _populateFormFields(station);
+                                      });
+                                      controller.selectStation(station);
+                                    },
+                                  ),
+                                  onTap: () {
                                     setState(() {
                                       isViewMode = true;
                                       isEditMode = false;
@@ -84,49 +112,41 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
                                     });
                                     controller.selectStation(station);
                                   },
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    isViewMode = true;
-                                    isEditMode = false;
-                                    _populateFormFields(station);
-                                  });
-                                  controller.selectStation(station);
-                                },
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Consumer<OwnerStationsController>(
-                  builder: (context, controller, child) {
-                    return Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildAddStationForm(context, controller),
-                            SizedBox(height: 20),
-                            if (isViewMode) _buildEditDeleteButtons(context, controller),
-                          ],
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                Expanded(
+                  flex: 2,
+                  child: Consumer<OwnerStationsController>(
+                    builder: (context, controller, child) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildAddStationForm(context, controller),
+                              SizedBox(height: 20),
+                              if (isViewMode) _buildEditDeleteButtons(context, controller),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -193,24 +213,6 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: TextFormField(
-            controller: _bikeReferencesController,
-            decoration: InputDecoration(
-              labelText: 'Bike References (comma separated)',
-              border: OutlineInputBorder(),
-            ),
-            enabled: !isViewMode || isEditMode,
-            style: TextStyle(color: isViewMode ? Colors.black : null),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter bike references';
-              }
-              return null;
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: TextFormField(
             controller: _latitudeController,
             decoration: InputDecoration(
               labelText: 'Latitude',
@@ -247,6 +249,24 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
               }
               if (double.tryParse(value) == null) {
                 return 'Please enter a valid number';
+              }
+              return null;
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: TextFormField(
+            controller: _bikeReferencesController,
+            decoration: InputDecoration(
+              labelText: 'Bike References (comma separated)',
+              border: OutlineInputBorder(),
+            ),
+            enabled: !isViewMode || isEditMode,
+            style: TextStyle(color: isViewMode ? Colors.black : null),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter bike references';
               }
               return null;
             },
