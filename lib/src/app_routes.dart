@@ -57,7 +57,7 @@ class AppRoutes {
       '/owner_login': (context) => const OwnerLoginPage(),
       '/owner_dashboard': (context) => const OwnerDashboardPage(),
       '/owner_bike': (context) => const OwnerBikePage(),
-      '/owner_station': (context) => const OwnerStationPage(),
+      '/owner_station': (context) => OwnerStationPage(),
       '/owner_user': (context) => const OwnerDashboardPage(),
       '/owner_account': (context) => const OwnerDashboardPage(),
     };

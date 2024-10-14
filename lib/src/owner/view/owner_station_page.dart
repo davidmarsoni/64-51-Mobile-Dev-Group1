@@ -1,14 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:valais_roll/data/objects/Bike.dart';
 import 'package:valais_roll/data/objects/Station.dart';
+import 'package:valais_roll/data/repository/bike_repository.dart';
 import 'package:valais_roll/src/owner/controller/owner_stations_controller.dart';
 import 'package:valais_roll/src/owner/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 
-class OwnerStationPage extends StatefulWidget {
-  const OwnerStationPage({super.key});
 
+class OwnerStationPage extends StatefulWidget {
   @override
   _OwnerStationPageState createState() => _OwnerStationPageState();
 }
@@ -24,6 +25,22 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _searchController = TextEditingController();
+
+  List<Bike> _bikes = []; // State variable to store the list of bikes
+  final BikeRepository _bikeRepository = BikeRepository(); // Instance of BikeRepository
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBikes(); // Fetch bikes when the widget is initialized
+  }
+
+  Future<void> _fetchBikes() async {
+    final bikesList = await _bikeRepository.getAllBikes();
+    setState(() {
+      _bikes = bikesList;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -267,6 +284,32 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter bike references';
+              }
+              return null;
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: DropdownButtonFormField<Bike>(
+            decoration: InputDecoration(
+              labelText: 'Select a Bike',
+              border: OutlineInputBorder(),
+            ),
+            items: _bikes.map((Bike bike) {
+              return DropdownMenuItem<Bike>(
+                value: bike,
+                child: Text(bike.name),
+              );
+            }).toList(),
+            onChanged: (Bike? newValue) {
+              setState(() {
+                // Handle the selected bike
+              });
+            },
+            validator: (value) {
+              if (value == null) {
+                return 'Please select a bike';
               }
               return null;
             },
