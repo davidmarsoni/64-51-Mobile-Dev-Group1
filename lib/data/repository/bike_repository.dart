@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:valais_roll/data/objects/Bike.dart';
+import 'package:flutter/material.dart';
 import 'package:valais_roll/data/enums/BikeState.dart';
+import 'package:valais_roll/data/objects/bike.dart';
 
 class BikeRepository {
   final CollectionReference _bikesCollection = FirebaseFirestore.instance.collection('bikes');
@@ -8,7 +9,8 @@ class BikeRepository {
   // Add a new bike
   Future<String> addBike(Bike bike) async {
     try {
-      await _bikesCollection.add(bike.toJson());
+      DocumentReference docRef = await _bikesCollection.add(bike.toJson());
+      bike.id = docRef.id; // Assign the generated ID to the bike
       return 'Bike added successfully';
     } catch (e) {
       return 'Error adding bike: $e';
@@ -50,20 +52,30 @@ class BikeRepository {
 
   // Get all bikes
   Future<List<Bike>> getAllBikes() async {
+    debugPrint('Getting all bikes');
     try {
       QuerySnapshot querySnapshot = await _bikesCollection.get();
-      return querySnapshot.docs.map((doc) => Bike.fromJson(doc.data() as Map<String, dynamic>)).toList();
+      return querySnapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Add the document ID to the data
+        return Bike.fromJson(data);
+      }).toList();
     } catch (e) {
       print('Error getting bikes: $e');
       return [];
     }
   }
 
+
   // Get only available bikes (operational)
   Future<List<Bike>> getAvailableBikes() async {
     try {
       QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
-      return querySnapshot.docs.map((doc) => Bike.fromJson(doc.data() as Map<String, dynamic>)).toList();
+      return querySnapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Add the document ID to the data
+        return Bike.fromJson(data);
+      }).toList();
     } catch (e) {
       print('Error getting available bikes: $e');
       return [];

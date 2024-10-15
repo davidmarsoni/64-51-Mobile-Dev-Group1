@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/Station.dart';
-import 'package:valais_roll/data/objects/Bike.dart';
+import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/data/repository/station_repository.dart';
 import 'package:valais_roll/data/repository/bike_repository.dart';
 

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:valais_roll/data/enums/BikeState.dart';
 
 class Bike {
@@ -20,6 +21,7 @@ class Bike {
   // Method to convert Bike object to JSON
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'model': model,
       'number': number,
