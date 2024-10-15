@@ -170,9 +170,29 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                   ),
                 ),
                 SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _handleStartRide,
-                  child: Text("Start Ride"),
+                Row(
+                  children: [
+                    Button(
+                      text: "Cancel",
+                      onPressed: () {
+                        // Handle cancellation
+                      },
+                      isFilled: true,
+                      color: Colors.red,
+                      horizontalPadding: 20.0,
+                      verticalPadding: 16.0,
+                    ),
+                    SizedBox(width: 10),
+                    Button(
+                      text: "Start Ride",
+                      onPressed: _handleStartRide, // Call the method for handling
+                      isFilled: true,
+                      horizontalPadding: 20.0,
+                      verticalPadding: 12.0,
+                      image: _getPaymentImage(),
+                      icon: userPaymentMethod == 'none' ? Icons.warning : null,
+                    ),
+                  ],
                 ),
                 SizedBox(height: 10),
                 // Display distance and duration in a compact style

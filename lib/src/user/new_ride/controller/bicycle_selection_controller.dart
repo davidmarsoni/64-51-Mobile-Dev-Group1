@@ -26,26 +26,26 @@ class BicycleSelectionController {
   });
 
   Future<void> getRouteInfo(List<LatLng>? waypoints) async {
-  String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
-  String url; 
+    String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+    String url;
 
-  if (waypoints != null && waypoints.isNotEmpty) {
-    // Create a string of waypoints for the request if available
-    String waypointsStr = waypoints
-        .map((point) => "${point.latitude},${point.longitude}")
-        .join('|');
+    if (waypoints != null && waypoints.isNotEmpty) {
+      // Create a string of waypoints for the request if available
+      String waypointsStr = waypoints
+          .map((point) => "${point.latitude},${point.longitude}")
+          .join('|');
 
-    // Build the URL for the Google Directions API with waypoints
-    url =
-        "https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&waypoints=$waypointsStr&mode=$mode&key=$apiKey";
-  } else {
-    // Build the URL for the Google Directions API without waypoints
-    url =
-        "https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&mode=$mode&key=$apiKey";
-  }
+      // Build the URL for the Google Directions API with waypoints
+      url =
+          "https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&waypoints=$waypointsStr&mode=$mode&key=$apiKey";
+    } else {
+      // Build the URL for the Google Directions API without waypoints
+      url =
+          "https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&mode=$mode&key=$apiKey";
+    }
 
-  // Now you can make the API request as usual
-  var response = await http.get(Uri.parse(url));
+    // Now you can make the API request as usual
+    var response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       // Parse the JSON response
@@ -53,39 +53,26 @@ class BicycleSelectionController {
       var routes = jsonData['routes'];
 
       if (routes.isNotEmpty) {
-        var legs = routes[0]['legs'][0];
-        var durationText = legs['duration']['text'];
-        var distanceText = legs['distance']['text'];
+        var legs = routes[0]['legs'];
+        
+        // Clear previous duration and distance
+        int totalDuration = 0;
+        int totalDistance = 0;
 
-        // Update the duration and distance fields
-        duration = durationText;
-        distance = distanceText;
-
-        // Update the estimatedTime and totalDistance fields
-        estimatedTime = durationText;
-        totalDistance = distanceText;
-
-        /*// Clear previous coordinates
-        polylineCoordinates.clear();
-
-        // Add polyline coordinates from the steps
-        var steps = legs['steps'];
-        for (var step in steps) {
-          var startLatLng = LatLng(step['start_location']['lat'], step['start_location']['lng']);
-          var endLatLng = LatLng(step['end_location']['lat'], step['end_location']['lng']);
-          polylineCoordinates.add(startLatLng);
-          polylineCoordinates.add(endLatLng);
+        // Loop through all the legs (between start → waypoint(s) → destination)
+        for (var leg in legs) {
+          // Add duration and distance of each leg
+          totalDuration += (leg['duration']['value'] as int);
+          totalDistance += (leg['distance']['value'] as int);
         }
 
-        // Create a PolylineId and store the polyline
-        PolylineId id = PolylineId("route_polyline");
-        Polyline polyline = Polyline(
-          polylineId: id,
-          color: const Color(0xFF4285F4), // Customize the color if needed
-          width: 5,
-          points: polylineCoordinates,
-        );
-        polylines[id] = polyline;*/
+        // Convert to human-readable format (Google gives duration in seconds and distance in meters)
+        duration = _formatDuration(totalDuration);
+        distance = (totalDistance / 1000).toStringAsFixed(2) + ' km';
+
+        // Update the estimatedTime and totalDistance fields
+        estimatedTime = duration!;
+        this.totalDistance = distance!;
       } else {
         print("No routes found.");
       }
@@ -95,6 +82,17 @@ class BicycleSelectionController {
       totalDistance = "Error";
     }
   }
+
+  String _formatDuration(int durationInSeconds) {
+    int hours = durationInSeconds ~/ 3600;
+    int minutes = (durationInSeconds % 3600) ~/ 60;
+    if (hours > 0) {
+      return "$hours h $minutes min";
+    } else {
+      return "$minutes min";
+    }
+  }
+
 
    Future<void> getPolyline() async {
     String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
