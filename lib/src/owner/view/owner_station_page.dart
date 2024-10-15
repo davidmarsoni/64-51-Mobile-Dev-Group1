@@ -25,6 +25,7 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
   final _searchController = TextEditingController();
 
   List<Bike> _bikes = []; // State variable to store the list of bikes
+  List<Bike> _bikesWithNoStation = []; // State variable to store the list of bikes with no station
   List<Bike> _selectedBikes = []; // State variable to store the selected bikes
   final BikeRepository _bikeRepository = BikeRepository(); // Instance of BikeRepository
 
@@ -35,16 +36,24 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
   }
 
   Future<void> _fetchBikes() async {
-    final bikesList = await _bikeRepository.getAllBikes();
-    setState(() {
-      _bikes = bikesList;
-    });
+    try {
+      final bikesList = await _bikeRepository.getAllBikes();
+      final bikesListWithNoStation = await _bikeRepository.getBikesWithNoStation();
+      setState(() {
+        _bikes = bikesList;
+        _bikesWithNoStation = bikesListWithNoStation;
+      });
+    } catch (e) {
+      debugPrint('Error fetching bikes: $e');
+    }
   }
 
   void _addBike(Bike bike) {
-    setState(() {
-      _selectedBikes.add(bike);
-    });
+    if (!_selectedBikes.contains(bike)) {
+      setState(() {
+        _selectedBikes.add(bike);
+      });
+    }
   }
 
   void _removeBike(Bike bike) {
@@ -201,168 +210,171 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
     return 'Add New Station';
   }
 
-        Widget _buildAddStationForm(BuildContext context, OwnerStationsController controller) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(_getFormTitle(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+  Widget _buildAddStationForm(BuildContext context, OwnerStationsController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(_getFormTitle(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              labelText: 'Name',
+              border: OutlineInputBorder(),
+            ),
+            enabled: !isViewMode || isEditMode,
+            style: TextStyle(color: isViewMode ? Colors.black : null),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a name';
+              }
+              return null;
+            },
           ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: TextFormField(
+            controller: _addressController,
+            decoration: InputDecoration(
+              labelText: 'Address',
+              border: OutlineInputBorder(),
+            ),
+            enabled: !isViewMode || isEditMode,
+            style: TextStyle(color: isViewMode ? Colors.black : null),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter an address';
+              }
+              return null;
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: TextFormField(
+            controller: _latitudeController,
+            decoration: InputDecoration(
+              labelText: 'Latitude',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+            enabled: !isViewMode || isEditMode,
+            style: TextStyle(color: isViewMode ? Colors.black : null),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a latitude';
+              }
+              if (double.tryParse(value) == null) {
+                return 'Please enter a valid number';
+              }
+              return null;
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: TextFormField(
+            controller: _longitudeController,
+            decoration: InputDecoration(
+              labelText: 'Longitude',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+            enabled: !isViewMode || isEditMode,
+            style: TextStyle(color: isViewMode ? Colors.black : null),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a longitude';
+              }
+              if (double.tryParse(value) == null) {
+                return 'Please enter a valid number';
+              }
+              return null;
+            },
+          ),
+        ),
+        if (!isViewMode || isEditMode)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: TextFormField(
-              controller: _nameController,
+            child: DropdownButtonFormField<Bike>(
               decoration: InputDecoration(
-                labelText: 'Name',
+                labelText: 'Select a Bike',
                 border: OutlineInputBorder(),
               ),
-              enabled: !isViewMode || isEditMode,
-              style: TextStyle(color: isViewMode ? Colors.black : null),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a name';
+              items: _bikesWithNoStation.map((Bike bike) {
+                return DropdownMenuItem<Bike>(
+                  value: bike,
+                  child: Text(bike.name),
+                  enabled: !_selectedBikes.contains(bike),
+                );
+              }).toList(),
+              onChanged: (Bike? newValue) {
+                if (newValue != null && !_selectedBikes.contains(newValue)) {
+                  _addBike(newValue);
                 }
+              },
+              validator: (value) {
+                // Add any necessary validation here
                 return null;
               },
             ),
           ),
+        SizedBox(height: 10),
+        if (_selectedBikes.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: TextFormField(
-              controller: _addressController,
-              decoration: InputDecoration(
-                labelText: 'Address',
-                border: OutlineInputBorder(),
-              ),
-              enabled: !isViewMode || isEditMode,
-              style: TextStyle(color: isViewMode ? Colors.black : null),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter an address';
-                }
-                return null;
-              },
-            ),
+            child: Text('Selected Bikes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: TextFormField(
-              controller: _latitudeController,
-              decoration: InputDecoration(
-                labelText: 'Latitude',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              enabled: !isViewMode || isEditMode,
-              style: TextStyle(color: isViewMode ? Colors.black : null),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a latitude';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Please enter a valid number';
-                }
-                return null;
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: TextFormField(
-              controller: _longitudeController,
-              decoration: InputDecoration(
-                labelText: 'Longitude',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              enabled: !isViewMode || isEditMode,
-              style: TextStyle(color: isViewMode ? Colors.black : null),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a longitude';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Please enter a valid number';
-                }
-                return null;
-              },
-            ),
-          ),
-          if (!isViewMode || isEditMode)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: DropdownButtonFormField<Bike>(
-                decoration: InputDecoration(
-                  labelText: 'Select a Bike',
-                  border: OutlineInputBorder(),
-                ),
-                items: _bikes.map((Bike bike) {
-                  return DropdownMenuItem<Bike>(
-                    value: bike,
-                    child: Text(bike.name),
+        Wrap(
+          spacing: 8.0,
+          children: _selectedBikes.map((bike) {
+            return Chip(
+              label: Text(bike.name),
+              onDeleted: (!isViewMode || isEditMode) ? () {
+                _removeBike(bike);
+              } : null,
+            );
+          }).toList(),
+        ),
+        SizedBox(height: 10),
+        if (!isViewMode)
+          OutlinedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                final name = _nameController.text;
+                final address = _addressController.text;
+                final bikeReferences = _selectedBikes.map((bike) => bike.id).toList();
+                final latitude = double.tryParse(_latitudeController.text);
+                final longitude = double.tryParse(_longitudeController.text);
+
+                if (latitude != null && longitude != null) {
+                  final newStation = Station(
+                    name: name,
+                    address: address,
+                    bikeReferences: bikeReferences.whereType<String>().toList(),
+                    coordinates: GeoPoint(latitude, longitude),
                   );
-                }).toList(),
-                onChanged: (Bike? newValue) {
-                  if (newValue != null && !_selectedBikes.contains(newValue)) {
-                    _addBike(newValue);
-                  }
-                },
-                validator: (value) {
-                 
-                },
-              ),
-            ),
-          SizedBox(height: 10),
-          if (_selectedBikes.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text('Selected Bikes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ),
-          Wrap(
-            spacing: 8.0,
-            children: _selectedBikes.map((bike) {
-              return Chip(
-                label: Text(bike.name),
-                onDeleted: (!isViewMode || isEditMode) ? () {
-                  _removeBike(bike);
-                } : null,
-              );
-            }).toList(),
-          ),
-          SizedBox(height: 10),
-          if (!isViewMode)
-            OutlinedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  final name = _nameController.text;
-                  final address = _addressController.text;
-                  final bikeReferences = _selectedBikes.map((bike) => bike.id).toList();
-                  final latitude = double.tryParse(_latitudeController.text);
-                  final longitude = double.tryParse(_longitudeController.text);
-    
-                  if (latitude != null && longitude != null) {
-                    final newStation = Station(
-                      name: name,
-                      address: address,
-                      bikeReferences: bikeReferences.whereType<String>().toList(),
-                      coordinates: GeoPoint(latitude, longitude),
-                    );
-    
-                    controller.addStation(newStation).then((result) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Station added successfully')));
-                      _clearFormFields();
-                    });
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid coordinates')));
-                  }
+
+                  controller.addStation(newStation).then((result) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Station added successfully')));
+                    _clearFormFields();
+                    _fetchBikes(); // Refresh the list of available bikes
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid coordinates')));
                 }
-              },
-              child: Text('Add Station'),
-            ),
-        ],
-      );
-    }
+              }
+            },
+            child: Text('Add Station'),
+          ),
+      ],
+    );
+  }
 
   Future<void> _showDeleteConfirmationDialog(BuildContext context, OwnerStationsController controller) async {
     return showDialog<void>(
@@ -395,6 +407,7 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
                   isViewMode = false;
                 });
                 Navigator.of(context).pop(); // Dismiss the dialog
+                _fetchBikes(); // Refresh the list of available bikes
               },
             ),
           ],
@@ -427,6 +440,7 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
                     isViewMode = true;
                     isEditMode = false;
                   });
+                  _fetchBikes(); // Refresh the list of available bikes
                 });
               }
             } else {

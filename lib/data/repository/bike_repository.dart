@@ -50,11 +50,11 @@ class BikeRepository {
     return null;
   }
 
-  // Get all bikes
+  // Get all bikes, ordered by name
   Future<List<Bike>> getAllBikes() async {
     debugPrint('Getting all bikes');
     try {
-      QuerySnapshot querySnapshot = await _bikesCollection.get();
+      QuerySnapshot querySnapshot = await _bikesCollection.orderBy('name').get();
       return querySnapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id; // Add the document ID to the data
@@ -65,7 +65,6 @@ class BikeRepository {
       return [];
     }
   }
-
 
   // Get only available bikes (operational)
   Future<List<Bike>> getAvailableBikes() async {
@@ -120,6 +119,35 @@ class BikeRepository {
       return 'Bike status updated to ${status.toString().split('.').last}';
     } catch (e) {
       return 'Error updating bike status: $e';
+    }
+  }
+
+  // Get bikes with no associated station, ordered by name
+  Future<List<Bike>> getBikesWithNoStation() async {
+    try {
+      // Query for bikes with stationReference as empty string and order by name
+      QuerySnapshot querySnapshot = await _bikesCollection
+          .where('stationReference', isEqualTo: '')
+          .get();
+
+      // Debug print all the bikes with no station
+      for (var doc in querySnapshot.docs) {
+        debugPrint('Bike with no station: ${doc.data()}');
+      }
+
+      if (querySnapshot.docs.isEmpty) {
+        debugPrint('No bikes found with no station.');
+      }
+
+      return querySnapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Add the document ID to the data
+        debugPrint('Data: $data');
+        return Bike.fromJson(data);
+      }).toList();
+    } catch (e) {
+      debugPrint('Error getting bikes with no station: $e');
+      return [];
     }
   }
 }

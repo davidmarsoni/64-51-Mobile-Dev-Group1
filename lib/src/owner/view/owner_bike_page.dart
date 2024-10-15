@@ -45,83 +45,93 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => OwnerBikesController(),
-      child: BasePage(
-        body: Scaffold(
-          appBar: AppBar(
-            title: Row(
-              children: [
-                Text('Bikes'),
-                Spacer(),
-                OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      isViewMode = false;
-                      isEditMode = false;
-                      _clearFormFields();
-                    });
-                  },
-                  child: Text('Add Bike'),
-                ),
-              ],
+      builder: (context, child) {
+        return BasePage(
+          body: Scaffold(
+            appBar: AppBar(
+              title: Row(
+                children: [
+                  Text('Bikes'),
+                  Spacer(),
+                  OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        isViewMode = false;
+                        isEditMode = false;
+                        _clearFormFields();
+                      });
+                    },
+                    child: Text('Add Bike'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          body: Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                labelText: 'Search',
-                                border: OutlineInputBorder(),
-                              ),
-                              onChanged: (value) {
-                                Provider.of<OwnerBikesController>(context, listen: false).updateSearchQuery(value);
-                              },
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Button(
-                            onPressed: () {
-                              Provider.of<OwnerBikesController>(context, listen: false).updateSearchQuery(_searchController.text);
-                            },
-                            text: 'Search',
-                            horizontalPadding: 15,
-                            verticalPadding: 22,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Consumer<OwnerBikesController>(
-                        builder: (context, controller, child) {
-                          return ListView.builder(
-                            itemCount: controller.filteredBikes.length,
-                            itemBuilder: (context, index) {
-                              final bike = controller.filteredBikes[index];
-                              return ListTile(
-                                title: Text(bike.name),
-                                subtitle: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: _getColorForBikeState(bike.bike_state),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    bike.bike_state.toString().split('.').last,
-                                    style: TextStyle(color: Colors.white),
-                                  ),
+            body: Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                decoration: InputDecoration(
+                                  labelText: 'Search',
+                                  border: OutlineInputBorder(),
                                 ),
-                                trailing: IconButton(
-                                  icon: Icon(Icons.arrow_forward),
-                                  onPressed: () {
+                                onChanged: (value) {
+                                  Provider.of<OwnerBikesController>(context, listen: false).updateSearchQuery(value);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Button(
+                              onPressed: () {
+                                Provider.of<OwnerBikesController>(context, listen: false).updateSearchQuery(_searchController.text);
+                              },
+                              text: 'Search',
+                              horizontalPadding: 15,
+                              verticalPadding: 22,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Consumer<OwnerBikesController>(
+                          builder: (context, controller, child) {
+                            return ListView.builder(
+                              itemCount: controller.filteredBikes.length,
+                              itemBuilder: (context, index) {
+                                final bike = controller.filteredBikes[index];
+                                return ListTile(
+                                  title: Text(bike.name),
+                                  subtitle: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: _getColorForBikeState(bike.bike_state),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      bike.bike_state.toString().split('.').last,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                  trailing: IconButton(
+                                    icon: Icon(Icons.arrow_forward),
+                                    onPressed: () {
+                                      setState(() {
+                                        isViewMode = true;
+                                        isEditMode = false;
+                                        _populateFormFields(bike);
+                                      });
+                                      controller.selectBike(bike);
+                                    },
+                                  ),
+                                  onTap: () {
                                     setState(() {
                                       isViewMode = true;
                                       isEditMode = false;
@@ -129,49 +139,41 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
                                     });
                                     controller.selectBike(bike);
                                   },
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    isViewMode = true;
-                                    isEditMode = false;
-                                    _populateFormFields(bike);
-                                  });
-                                  controller.selectBike(bike);
-                                },
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Consumer<OwnerBikesController>(
-                  builder: (context, controller, child) {
-                    return Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildAddBikeForm(context, controller),
-                            SizedBox(height: 20),
-                            if (isViewMode) _buildEditDeleteButtons(context, controller),
-                          ],
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                Expanded(
+                  flex: 2,
+                  child: Consumer<OwnerBikesController>(
+                    builder: (context, controller, child) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildAddBikeForm(context, controller),
+                              SizedBox(height: 20),
+                              if (isViewMode) _buildEditDeleteButtons(context, controller),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -180,7 +182,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
     _modelController.text = bike.model;
     _numberController.text = bike.number;
     _selectedStatus = bike.bike_state;
-       _selectedStation = _stations.firstWhere((station) => station.id == bike.stationReference, orElse: () => _stations.first);
+    _selectedStation = _stations.firstWhere((station) => station.id == bike.stationReference, orElse: () => _stations.first);
   }
 
   void _clearFormFields() {

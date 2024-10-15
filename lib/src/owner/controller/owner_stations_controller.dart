@@ -33,7 +33,7 @@ class OwnerStationsController extends ChangeNotifier {
 
   Future<void> _fetchBikes() async {
     try {
-      _bikes = await _bikeRepository.getAllBikes();
+      _bikes = await _bikeRepository.getBikesWithNoStation();
       notifyListeners();
     } catch (e) {
       debugPrint('Error fetching bikes: $e');
