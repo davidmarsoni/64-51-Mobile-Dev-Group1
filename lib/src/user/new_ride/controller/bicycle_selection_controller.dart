@@ -25,23 +25,27 @@ class BicycleSelectionController {
     this.mode = 'bicycling', // default to bicycling
   });
 
-  // Function to get distance, duration, and polyline route info using Google Directions API
-  Future<void> getRouteInfo(List<LatLng> waypoints) async {
-    String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+  Future<void> getRouteInfo(List<LatLng>? waypoints) async {
+  String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+  String url; 
 
+  if (waypoints != null && waypoints.isNotEmpty) {
     // Create a string of waypoints for the request if available
-    String waypointsStr = waypoints.isNotEmpty
-        ? waypoints
-            .map((point) => "${point.latitude},${point.longitude}")
-            .join('|')
-        : '';
+    String waypointsStr = waypoints
+        .map((point) => "${point.latitude},${point.longitude}")
+        .join('|');
 
-    // Build the URL for the Google Directions API with optional waypoints
-    String url =
+    // Build the URL for the Google Directions API with waypoints
+    url =
         "https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&waypoints=$waypointsStr&mode=$mode&key=$apiKey";
+  } else {
+    // Build the URL for the Google Directions API without waypoints
+    url =
+        "https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&mode=$mode&key=$apiKey";
+  }
 
-    // Make the request to the API
-    var response = await http.get(Uri.parse(url));
+  // Now you can make the API request as usual
+  var response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       // Parse the JSON response
@@ -61,7 +65,7 @@ class BicycleSelectionController {
         estimatedTime = durationText;
         totalDistance = distanceText;
 
-        // Clear previous coordinates
+        /*// Clear previous coordinates
         polylineCoordinates.clear();
 
         // Add polyline coordinates from the steps
@@ -81,7 +85,7 @@ class BicycleSelectionController {
           width: 5,
           points: polylineCoordinates,
         );
-        polylines[id] = polyline;
+        polylines[id] = polyline;*/
       } else {
         print("No routes found.");
       }
@@ -92,17 +96,53 @@ class BicycleSelectionController {
     }
   }
 
-  // Function to draw the route (polyline) including waypoints
+   Future<void> getPolyline() async {
+    String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+ 
+    // Initialize PolylinePoints
+    PolylinePoints polylinePoints = PolylinePoints();
+ 
+    // Get the route between the start and destination points
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      googleApiKey: apiKey,
+      request: PolylineRequest(
+        origin: PointLatLng(startPoint.latitude, startPoint.longitude),
+        destination:
+            PointLatLng(destinationPoint.latitude, destinationPoint.longitude),
+        mode: TravelMode.bicycling,
+      ),
+    );
+ 
+    if (result.points.isNotEmpty) {
+      polylineCoordinates.clear();
+      for (var point in result.points) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      }
+ 
+      // Create a PolylineId
+      PolylineId id = PolylineId("poly");
+      Polyline polyline = Polyline(
+        polylineId: id,
+        color: Colors.blue,
+        points: polylineCoordinates,
+        width: 5,
+      );
+      polylines[id] = polyline;
+    } else {
+      print("No route found or error: ${result.errorMessage}");
+    }
+  }
+
   Future<void> getPolylineWithWaypoints(List<LatLng> waypoints) async {
     String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
-
+ 
     PolylinePoints polylinePoints = PolylinePoints();
-
+ 
     // Create a string of waypoints for the request
     String waypointsStr = waypoints
         .map((point) => "${point.latitude},${point.longitude}")
         .join('|');
-
+ 
     // Get the route between the start, waypoints, and destination
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
       googleApiKey: apiKey,
@@ -117,13 +157,13 @@ class BicycleSelectionController {
         mode: TravelMode.bicycling,
       ),
     );
-
+ 
     if (result.points.isNotEmpty) {
       polylineCoordinates.clear();
       for (var point in result.points) {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
       }
-
+ 
       // Create a PolylineId
       PolylineId id = PolylineId("poly");
       Polyline polyline = Polyline(

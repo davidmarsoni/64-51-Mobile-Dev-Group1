@@ -117,7 +117,8 @@ class _ItineraryStationViewState extends State<ItineraryStationView> {
       );
 
       // Fetch the estimated time and distance
-      await routeController.getRouteInfo();
+      await routeController.getRouteInfo(null);
+      await routeController.getPolyline();
 
       setState(() {
         _duration = routeController.estimatedTime;

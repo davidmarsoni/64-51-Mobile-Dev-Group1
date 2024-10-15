@@ -121,7 +121,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       // Clear the previous waypoints and add the new tapped position
       waypoints.clear();
       waypoints.add(position); // Ajoutez le waypoint à l'emplacement cliqué
-
+ 
       // Créez un nouveau marqueur pour le waypoint
       waypointMarker = Marker(
         markerId: MarkerId('waypoint'), // ID fixe pour le waypoint
@@ -129,12 +129,12 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
         infoWindow: InfoWindow(title: 'Waypoint'),
       );
     });
-
+ 
     // Update the polyline with the new waypoints and recalculate distance/time
     _controller.getPolylineWithWaypoints(waypoints).then((_) async {
       // Fetch the updated route information with the new waypoint
       await _controller.getRouteInfo(waypoints); // Pass the waypoints
-
+ 
       // Update distance and duration based on the fetched route
       setState(() {
         distance =
