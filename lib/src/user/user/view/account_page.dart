@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:valais_roll/data/objects/appUser.dart';
+import 'package:valais_roll/data/objects/app_user.dart';
 import 'package:valais_roll/src/user/user/controller/user_controller.dart';
 import 'package:valais_roll/src/user/welcome/welcome_page.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';

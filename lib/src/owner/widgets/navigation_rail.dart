@@ -9,6 +9,29 @@ class NavigationRailComponent extends StatefulWidget {
 }
 
 class _NavigationRailComponentState extends State<NavigationRailComponent> {
+  int _selectedIndex = 0;
+
+  final List<String> _routes = [
+    '/owner_dashboard',
+    '/owner_bike',
+    '/owner_station',
+    '/owner_user',
+    '/owner_account',
+  ];
+
+  bool _isCurrentRoute(String routeName) {
+    return ModalRoute.of(context)?.settings.name == routeName;
+  }
+
+  void _onDestinationSelected(int index) {
+    if (!_isCurrentRoute(_routes[index])) {
+      setState(() {
+        _selectedIndex = index;
+      });
+      Navigator.pushNamed(context, _routes[index]);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -16,34 +39,34 @@ class _NavigationRailComponentState extends State<NavigationRailComponent> {
       builder: (context, snapshot) {
         bool isConnected = snapshot.hasData && snapshot.data != null;
 
+        if (!isConnected) {
+          return Container(); // Return an empty container when the user is not connected
+        }
+
         return NavigationRail(
-          selectedIndex: 0,
-          onDestinationSelected: isConnected
-              ? (int index) {
-                  // Handle navigation
-                }
-              : null,
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onDestinationSelected,
           labelType: NavigationRailLabelType.all,
-          destinations: [
+          destinations: const [
             NavigationRailDestination(
-              icon: Icon(Icons.dashboard, color: isConnected ? null : Colors.grey),
-              label: Text('Overview', style: TextStyle(color: isConnected ? null : Colors.grey)),
+              icon: Icon(Icons.dashboard),
+              label: Text('Overview'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.directions_bike, color: isConnected ? null : Colors.grey),
-              label: Text('Bikes', style: TextStyle(color: isConnected ? null : Colors.grey)),
+              icon: Icon(Icons.directions_bike),
+              label: Text('Bikes'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.location_on, color: isConnected ? null : Colors.grey),
-              label: Text('Stations', style: TextStyle(color: isConnected ? null : Colors.grey)),
+              icon: Icon(Icons.location_on),
+              label: Text('Stations'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.people, color: isConnected ? null : Colors.grey),
-              label: Text('Users', style: TextStyle(color: isConnected ? null : Colors.grey)),
+              icon: Icon(Icons.people),
+              label: Text('Users'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.account_circle, color: isConnected ? null : Colors.grey),
-              label: Text('Account', style: TextStyle(color: isConnected ? null : Colors.grey)),
+              icon: Icon(Icons.account_circle),
+              label: Text('Account'),
             ),
           ],
         );

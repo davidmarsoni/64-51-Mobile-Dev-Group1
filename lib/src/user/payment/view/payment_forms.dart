@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:valais_roll/data/objects/payementData.dart';
+import 'package:valais_roll/data/objects/payement_data.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 
 // Credit Card Form Widget

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:valais_roll/data/objects/appUser.dart';
+import 'package:valais_roll/data/objects/app_user.dart';
 import 'package:valais_roll/src/user/user/view/login_page.dart'; 
 
 class UserController {
@@ -75,8 +75,7 @@ class UserController {
 
     // Add the map for the payementMethod to the firebase
 
-
-    await _firestore.collection('users').doc(user.uid).set(appUser.toMap());
+    await _firestore.collection('users').doc(user.uid).set(appUser.toJson());
   }
 
   // Error handling
