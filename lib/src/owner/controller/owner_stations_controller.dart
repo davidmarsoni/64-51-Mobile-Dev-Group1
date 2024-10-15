@@ -67,21 +67,21 @@ class OwnerStationsController extends ChangeNotifier {
     }
   }
 
-  Future<void> updateStation(Station station) async {
-    try {
-      await _stationRepository.updateStation(station.id!, station);
-      await _fetchStations();
-    } catch (e) {
-      debugPrint('Error updating station: $e');
-    }
-  }
-
   Future<void> deleteStation(Station station) async {
     try {
       await _stationRepository.deleteStation(station.id!);
       await _fetchStations();
     } catch (e) {
       debugPrint('Error deleting station: $e');
+    }
+  }
+
+  Future<void> updateStation(Station station) async {
+    try {
+      await _stationRepository.updateStation(station.id!, station);
+      await _fetchStations();
+    } catch (e) {
+      debugPrint('Error updating station: $e');
     }
   }
 }
