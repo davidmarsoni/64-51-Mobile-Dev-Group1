@@ -291,7 +291,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     setState(() {
                       _startLatLng = stationPosition;
                       _startController.text = stationName;
-                      _approvedStartStation = stationName; // Approve the station
+                      _approvedStartStation = stationName; 
 
                       // Hide the approval icon after 1 second
                       Timer(Duration(seconds: 1), () {
@@ -325,6 +325,22 @@ class _ItineraryPageState extends State<ItineraryPage> {
                       Navigator.pop(context);
                     });
                     _checkIfBothLocationsAreStations();
+                  },
+                ),
+                // have a third ListTile to go to the station and open a new page called "itinary_station_view.dart"
+                ListTile(
+                  title: Text('Start your journey to this station'),
+                  subtitle: Text('Station: $stationName'),
+                  onTap: () {
+                    // Inside _onStationMarkerTapped method
+                    Navigator.pushNamed(
+                      context,
+                      '/itinaryStation',
+                      arguments: {
+                        'stationName': stationName,           
+                        'stationPosition': stationPosition,  
+                      },
+                    );
                   },
                 ),
               ],

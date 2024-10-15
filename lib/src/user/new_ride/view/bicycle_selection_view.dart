@@ -28,6 +28,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     _controller = BicycleSelectionController(
       startPoint: widget.startPoint,
       destinationPoint: widget.destinationPoint,
+      mode: 'bicycling', // Explicitly set the mode to 'bicycling'
     );
 
     _fetchRouteInfo();
@@ -35,20 +36,19 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
   }
 
   // Fetch route information and polyline on initialization
-  Future<void> _fetchRouteInfo() async {
-    await _controller.getRouteInfo();
-    await _controller.getPolyline();
+    Future<void> _fetchRouteInfo() async {
+      await _controller.getRouteInfo();
 
-    // Update the UI after fetching the route info and polylines
-    setState(() {});
-  }
+      // Update the UI after fetching the route info and polylines
+      setState(() {});
+    }
+
 
   // Fetch the user's payment method from the database
-   Future<void> _fetchPaymentMethod() async {
+  Future<void> _fetchPaymentMethod() async {
     PaymentMethodController paymentController = PaymentMethodController();
     String? paymentMethod = await paymentController.fetchPaymentMethod();
-    
-    
+
     setState(() {
       userPaymentMethod = paymentMethod;
       isLoadingPaymentMethod = false; // Stop loading once payment method is fetched
@@ -61,12 +61,6 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       return null; // No image when there's no payment method, use an Icon fallback
     }
 
-    debugPrint('Payment method: $userPaymentMethod');
-    debugPrint('Payment method: $userPaymentMethod');
-    debugPrint('Payment method: $userPaymentMethod');
-    debugPrint('Payment method: $userPaymentMethod');
-    debugPrint('Payment method: $userPaymentMethod');
-
     // Display images based on the payment method
     switch (userPaymentMethod) {
       case 'google_pay':
@@ -74,12 +68,8 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       case 'credit_card':
         return Image.asset('assets/png/mastercard.png', width: 30, height: 30);
       case 'klarna':
-        debugPrint('AAA');
-         debugPrint('AAA');
         return Image.asset('assets/png/klarna.png', width: 30, height: 30);
       default:
-       debugPrint('BBB');
-        debugPrint('BBB');
         return null; // Fallback, empty widget for unknown payment methods
     }
   }

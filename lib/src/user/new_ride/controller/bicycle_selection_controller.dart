@@ -1,28 +1,33 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart'; 
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 
 class BicycleSelectionController {
   final LatLng startPoint;
   final LatLng destinationPoint;
+  final String mode; // Specify the mode
 
   String estimatedTime = "Loading...";
   String totalDistance = "Loading...";
   List<LatLng> polylineCoordinates = [];
   Map<PolylineId, Polyline> polylines = {};
 
-  BicycleSelectionController({required this.startPoint, required this.destinationPoint});
+  BicycleSelectionController({
+    required this.startPoint,
+    required this.destinationPoint,
+    this.mode = 'bicycling',
+  });
 
-  // Function to get distance and duration using Google Directions API
+  // Function to get distance and duration using Google Directions API and draw the polyline
   Future<void> getRouteInfo() async {
     String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
 
     // Build the URL for the Google Directions API
     String url =
-        "https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&mode=bicycling&key=$apiKey";
+        "https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&mode=$mode&key=$apiKey";
 
     // Make the request to the API
     var response = await http.get(Uri.parse(url));
@@ -38,48 +43,33 @@ class BicycleSelectionController {
         var distance = legs['distance']['text']; 
         estimatedTime = duration; 
         totalDistance = distance; 
+
+        // Clear previous coordinates
+        polylineCoordinates.clear();
+
+        // Add polyline coordinates
+        var steps = legs['steps'];
+        for (var step in steps) {
+          var startLatLng = LatLng(step['start_location']['lat'], step['start_location']['lng']);
+          var endLatLng = LatLng(step['end_location']['lat'], step['end_location']['lng']);
+          polylineCoordinates.add(startLatLng);
+          polylineCoordinates.add(endLatLng);
+        }
+
+        // Create a PolylineId
+        PolylineId id = PolylineId("route_polyline");
+        Polyline polyline = Polyline(
+          polylineId: id,
+          color: const Color(0xFF4285F4), // Customize the color if needed
+          width: 5,
+          points: polylineCoordinates,
+        );
+        polylines[id] = polyline;
       }
     } else {
       print("Error fetching directions: ${response.statusCode}");
       estimatedTime = "Error";
       totalDistance = "Error";
-    }
-  }
-
-  // Function to draw the route (polyline) between start and destination
-  Future<void> getPolyline() async {
-    String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
-
-    // Initialize PolylinePoints
-    PolylinePoints polylinePoints = PolylinePoints();
-
-    // Get the route between the start and destination points
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      googleApiKey: apiKey,
-      request: PolylineRequest(
-        origin: PointLatLng(startPoint.latitude, startPoint.longitude),
-        destination: PointLatLng(destinationPoint.latitude, destinationPoint.longitude),
-        mode: TravelMode.bicycling,
-      ),
-    );
-
-    if (result.points.isNotEmpty) {
-      polylineCoordinates.clear();
-      for (var point in result.points) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      }
-
-      // Create a PolylineId
-      PolylineId id = PolylineId("poly");
-      Polyline polyline = Polyline(
-        polylineId: id,
-        color: Colors.blue,
-        points: polylineCoordinates,
-        width: 5,
-      );
-      polylines[id] = polyline;
-    } else {
-      print("No route found or error: ${result.errorMessage}");
     }
   }
 }

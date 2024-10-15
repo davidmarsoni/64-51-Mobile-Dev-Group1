@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as loc;
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // For Google API key
 
 class ItineraryController {
   final loc.Location _locationController = loc.Location();
@@ -24,27 +27,37 @@ class ItineraryController {
   bool _isDisposed = false;
 
   //getter for stationnames
-  //List<String> get stationNames => _stationNames to lower case
   List<String> get stationNames => _stationNames.map((name) => name.toLowerCase()).toList();
 
   Future<void> getUserLocation() async {
     bool serviceEnabled;
     loc.PermissionStatus permissionGranted;
 
+    // Ensure that the location service is enabled
     serviceEnabled = await _locationController.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await _locationController.requestService();
-      if (!serviceEnabled) return;
+      if (!serviceEnabled) {
+        print("Location services are disabled.");
+        return;
+      }
     }
 
+    // Check for location permissions
     permissionGranted = await _locationController.hasPermission();
     if (permissionGranted == loc.PermissionStatus.denied) {
       permissionGranted = await _locationController.requestPermission();
-      if (permissionGranted != loc.PermissionStatus.granted) return;
+      if (permissionGranted != loc.PermissionStatus.granted) {
+        print("Location permissions are denied.");
+        return;
+      }
     }
 
+    // Fetch the current location
     loc.LocationData locationData = await _locationController.getLocation();
     _currentP = LatLng(locationData.latitude!, locationData.longitude!);
+
+    // Notify listeners that the current position is available
     if (!_isDisposed) {
       _locationControllerStream.add(_currentP);
     }
@@ -77,6 +90,70 @@ class ItineraryController {
       _markersController.add(_markers);
     }
   }
+
+  // Method to calculate the route and polyline between the user's current position and a station
+  Future<void> getRouteFromCurrentPosition(LatLng destinationPoint, String mode) async {
+  if (_currentP == null) {
+    print("Current position not available.");
+    return;
+  }
+
+  String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+if (apiKey.isEmpty) {
+  print("API Key is missing!");
+}
+
+
+  // Initialize PolylinePoints for generating polylines
+  PolylinePoints polylinePoints = PolylinePoints();
+
+  TravelMode _getTravelMode(String mode) {
+    switch (mode) {
+      case 'walking':
+        return TravelMode.walking;
+      case 'driving':
+        return TravelMode.driving;
+      case 'bicycling':
+        return TravelMode.bicycling;
+      default:
+        return TravelMode.driving;
+    }
+  }
+
+  // Get the route between the current position and the selected station based on the selected mode
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+    googleApiKey: apiKey,
+    request: PolylineRequest(
+      origin: PointLatLng(_currentP!.latitude, _currentP!.longitude),
+      destination: PointLatLng(destinationPoint.latitude, destinationPoint.longitude),
+      mode: _getTravelMode(mode),
+    ),
+  );
+
+  if (result.points.isNotEmpty) {
+    List<LatLng> polylineCoordinates = [];
+    for (var point in result.points) {
+      polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+    }
+
+    // Create a PolylineId
+    PolylineId id = PolylineId("route_from_current_$mode");
+    Polyline polyline = Polyline(
+      polylineId: id,
+      color: const Color(0xFF4285F4), // Customize color here
+      width: 5,
+      points: polylineCoordinates,
+    );
+    polylines[id] = polyline;
+
+    // Notify listeners about the new polyline
+    if (!_isDisposed) {
+      _markersController.add(_markers);
+    }
+  } else {
+    print("No route found or error: ${result.errorMessage}");
+  }
+}
 
   void onTextChanged(String searchText, bool isStart) {
     _suggestedStations = _stationNames
