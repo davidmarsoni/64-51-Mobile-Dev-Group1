@@ -22,7 +22,7 @@ class StationRepository {
     }
   }
 
-   Future<String> addStation(Station station) async {
+  Future<String> addStation(Station station) async {
     try {
       // Add the station to the collection and get the document reference
       DocumentReference docRef = await _stationsCollection.add(station.toJson());
@@ -30,7 +30,6 @@ class StationRepository {
       // Get the newly added station's ID
       String stationId = docRef.id;
   
-     
       // Update the bikes with the station reference
       for (var bikeref in station.bikeReferences) {
         if (bikeref != null) {
@@ -50,7 +49,7 @@ class StationRepository {
     }
   }
 
-    Future<String> updateStation(String id, Station station) async {
+  Future<String> updateStation(String id, Station station) async {
     try {
       // Retrieve the previous station data
       DocumentSnapshot docSnapshot = await _stationsCollection.doc(id).get();
@@ -89,7 +88,8 @@ class StationRepository {
       return 'Error updating station: $e';
     }
   }
-    Future<String> deleteStation(String id) async {
+
+  Future<String> deleteStation(String id) async {
     try {
       // Retrieve the station data to get the bike references
       DocumentSnapshot docSnapshot = await _stationsCollection.doc(id).get();
@@ -128,5 +128,29 @@ class StationRepository {
       print('Error fetching station by ID: $e');
     }
     return null;
+  }
+
+  Future<String> addBikeRef(String stationId, String bikeRef) async {
+    try {
+      // Update the station document to include the bike reference
+      await _stationsCollection.doc(stationId).update({
+        'bikeReferences': FieldValue.arrayUnion([bikeRef])
+      });
+      return 'Bike reference added to station successfully';
+    } catch (e) {
+      return 'Error adding bike reference to station: $e';
+    }
+  }
+
+  Future<String> deleteBikeRef(String stationId, String bikeRef) async {
+    try {
+      // Update the station document to remove the bike reference
+      await _stationsCollection.doc(stationId).update({
+        'bikeReferences': FieldValue.arrayRemove([bikeRef])
+      });
+      return 'Bike reference removed from station successfully';
+    } catch (e) {
+      return 'Error removing bike reference from station: $e';
+    }
   }
 }
