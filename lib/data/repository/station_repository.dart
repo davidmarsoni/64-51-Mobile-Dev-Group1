@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:valais_roll/data/enums/BikeState.dart';
 import 'package:valais_roll/data/objects/Station.dart';
 import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/data/repository/bike_repository.dart';
@@ -151,6 +152,27 @@ class StationRepository {
       return 'Bike reference removed from station successfully';
     } catch (e) {
       return 'Error removing bike reference from station: $e';
+    }
+  }
+
+  Future<int> countAvailableBikes(String stationId) async {
+    try {
+      int availableBikeCount = 0;
+      Station station = (await getStationById(stationId))!;
+
+      for (var bikeRef in station.bikeReferences) {
+        if (bikeRef != null) {
+          Bike? bike = await _bikeRepository.getBikeById(bikeRef);
+          if (bike != null && bike.bike_state == BikeState.available) {
+            availableBikeCount++;
+          }
+        }
+      }
+
+      return availableBikeCount;
+    } catch (e) {
+      debugPrint('Error counting available bikes: $e');
+      return 0;
     }
   }
 }
