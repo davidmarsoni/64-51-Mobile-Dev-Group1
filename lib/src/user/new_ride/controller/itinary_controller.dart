@@ -17,10 +17,12 @@ class ItineraryController {
   List<String> get suggestedStations => _suggestedStations;
 
   // Stream controllers for location and markers updates
-  final StreamController<List<Marker>> _markersController = StreamController<List<Marker>>.broadcast();
+  final StreamController<List<Marker>> _markersController =
+      StreamController<List<Marker>>.broadcast();
   Stream<List<Marker>> get markersStream => _markersController.stream;
 
-  final StreamController<LatLng?> _locationControllerStream = StreamController<LatLng?>.broadcast();
+  final StreamController<LatLng?> _locationControllerStream =
+      StreamController<LatLng?>.broadcast();
   Stream<LatLng?> get locationStream => _locationControllerStream.stream;
 
   // Flag to track if the controller is disposed
@@ -69,10 +71,12 @@ class ItineraryController {
   }
 
   Future<void> fetchStations() async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('stations').get();
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('stations').get();
     List<Marker> markers = snapshot.docs.map((doc) {
       GeoPoint geoPoint = doc['Geopoint'];
-      String stationName = doc['Name'].toLowerCase().trim();  // Ensure lowercase and trim spaces
+      String stationName =
+          doc['Name'].toLowerCase().trim(); // Ensure lowercase and trim spaces
       _stationNames.add(stationName);
 
       return Marker(
@@ -157,7 +161,8 @@ if (apiKey.isEmpty) {
 
   void onTextChanged(String searchText, bool isStart) {
     _suggestedStations = _stationNames
-        .where((station) => station.toLowerCase().startsWith(searchText.toLowerCase()))
+        .where((station) =>
+            station.toLowerCase().startsWith(searchText.toLowerCase()))
         .toList();
   }
 

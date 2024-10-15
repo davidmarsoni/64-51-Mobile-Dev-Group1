@@ -74,7 +74,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
 
   // Method to search for either start or destination and set coordinates
   Future<void> _performSearch(bool isStart) async {
-    String query = isStart ? _startController.text : _destinationController.text;
+    String query =
+        isStart ? _startController.text : _destinationController.text;
 
     if (query.isNotEmpty) {
       String normalizedQuery = query.toLowerCase().trim();
@@ -82,17 +83,21 @@ class _ItineraryPageState extends State<ItineraryPage> {
       // Check if the input matches a station name
       if (_itineraryController.stationNames.contains(normalizedQuery)) {
         Marker? matchingMarker = _itineraryController.markers.firstWhere(
-          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == normalizedQuery,
+          (marker) =>
+              marker.infoWindow.title!.split('|')[0].toLowerCase().trim() ==
+              normalizedQuery,
           orElse: () => Marker(markerId: MarkerId('default')),
         );
 
         setState(() {
           if (isStart) {
             _startLatLng = matchingMarker.position;
-            _approvedStartStation = matchingMarker.infoWindow.title!.split('|')[0]; // Set the approved station
+            _approvedStartStation = matchingMarker.infoWindow.title!
+                .split('|')[0]; // Set the approved station
           } else {
             _destinationLatLng = matchingMarker.position;
-            _approvedDestinationStation = matchingMarker.infoWindow.title!.split('|')[0]; // Set the approved station
+            _approvedDestinationStation = matchingMarker.infoWindow.title!
+                .split('|')[0]; // Set the approved station
           }
         });
 
@@ -104,7 +109,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
       try {
         List<Location> locations = await locationFromAddress(query);
         if (locations.isNotEmpty) {
-          LatLng latLng = LatLng(locations.first.latitude, locations.first.longitude);
+          LatLng latLng =
+              LatLng(locations.first.latitude, locations.first.longitude);
 
           final GoogleMapController controller = await _mapController.future;
           controller.animateCamera(CameraUpdate.newCameraPosition(
@@ -114,10 +120,12 @@ class _ItineraryPageState extends State<ItineraryPage> {
           setState(() {
             if (isStart) {
               _startLatLng = latLng;
-              _approvedStartStation = null; // Clear approval if it's not a station
+              _approvedStartStation =
+                  null; // Clear approval if it's not a station
             } else {
               _destinationLatLng = latLng;
-              _approvedDestinationStation = null; // Clear approval if it's not a station
+              _approvedDestinationStation =
+                  null; // Clear approval if it's not a station
             }
           });
 
@@ -128,7 +136,6 @@ class _ItineraryPageState extends State<ItineraryPage> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +162,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
                         );
                       }),
                     ),
-                    polylines: Set<Polyline>.of(_itineraryController.polylines.values),
+                    polylines:
+                        Set<Polyline>.of(_itineraryController.polylines.values),
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
                     mapType: MapType.normal,
@@ -177,7 +185,9 @@ class _ItineraryPageState extends State<ItineraryPage> {
                         decoration: InputDecoration(
                           labelText: 'Start',
                           filled: true,
-                          fillColor: _isStartValid ? Color.fromARGB(255, 194, 225, 169) : Colors.grey[200],
+                          fillColor: _isStartValid
+                              ? Color.fromARGB(255, 194, 225, 169)
+                              : Colors.grey[200],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -198,7 +208,9 @@ class _ItineraryPageState extends State<ItineraryPage> {
                         decoration: InputDecoration(
                           labelText: 'Destination',
                           filled: true,
-                          fillColor: _isDestinationValid ? Color.fromARGB(255, 194, 225, 169) : Colors.grey[200],
+                          fillColor: _isDestinationValid
+                              ? Color.fromARGB(255, 194, 225, 169)
+                              : Colors.grey[200],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -237,7 +249,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
                       ),
                     );
                   } else {
-                    _showErrorMessage("Both start and destination must be valid stations.");
+                    _showErrorMessage(
+                        "Both start and destination must be valid stations.");
                   }
                 },
                 icon: Icon(Icons.directions),
@@ -252,9 +265,11 @@ class _ItineraryPageState extends State<ItineraryPage> {
             child: FloatingActionButton(
               heroTag: "recenterButton",
               onPressed: () async {
-                LatLng? currentLocation = await _itineraryController.getPosition();
+                LatLng? currentLocation =
+                    await _itineraryController.getPosition();
                 if (currentLocation != null) {
-                  final GoogleMapController controller = await _mapController.future;
+                  final GoogleMapController controller =
+                      await _mapController.future;
                   controller.animateCamera(CameraUpdate.newCameraPosition(
                     CameraPosition(target: currentLocation, zoom: 14.0),
                   ));
@@ -314,7 +329,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     setState(() {
                       _destinationLatLng = stationPosition;
                       _destinationController.text = stationName;
-                      _approvedDestinationStation = stationName; // Approve the station
+                      _approvedDestinationStation =
+                          stationName; // Approve the station
 
                       // Hide the approval icon after 1 second
                       Timer(Duration(seconds: 1), () {
@@ -351,46 +367,60 @@ class _ItineraryPageState extends State<ItineraryPage> {
     );
   }
 
-
   // Check if both the start and destination are valid stations and show the button
   void _checkIfBothLocationsAreStations() {
     setState(() {
       String startInput = _startController.text.toLowerCase().trim();
-      String destinationInput = _destinationController.text.toLowerCase().trim();
+      String destinationInput =
+          _destinationController.text.toLowerCase().trim();
 
-      bool startIsValid = _itineraryController.stationNames.contains(startInput);
-      bool destinationIsValid = _itineraryController.stationNames.contains(destinationInput);
+      bool startIsValid =
+          _itineraryController.stationNames.contains(startInput);
+      bool destinationIsValid =
+          _itineraryController.stationNames.contains(destinationInput);
 
       // Update start and destination LatLngs if valid
       if (startIsValid) {
         Marker? matchingStartMarker = _itineraryController.markers.firstWhere(
-          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == startInput,
+          (marker) =>
+              marker.infoWindow.title!.split('|')[0].toLowerCase().trim() ==
+              startInput,
           orElse: () => Marker(markerId: MarkerId('default')),
         );
         _startLatLng = matchingStartMarker.position;
-        _approvedStartStation = matchingStartMarker.infoWindow.title!.split('|')[0]; // Approve the station
+        _approvedStartStation = matchingStartMarker.infoWindow.title!
+            .split('|')[0]; // Approve the station
       }
 
       if (destinationIsValid) {
-        Marker? matchingDestinationMarker = _itineraryController.markers.firstWhere(
-          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == destinationInput,
+        Marker? matchingDestinationMarker =
+            _itineraryController.markers.firstWhere(
+          (marker) =>
+              marker.infoWindow.title!.split('|')[0].toLowerCase().trim() ==
+              destinationInput,
           orElse: () => Marker(markerId: MarkerId('default')),
         );
         _destinationLatLng = matchingDestinationMarker.position;
-        _approvedDestinationStation = matchingDestinationMarker.infoWindow.title!.split('|')[0]; // Approve the station
+        _approvedDestinationStation = matchingDestinationMarker
+            .infoWindow.title!
+            .split('|')[0]; // Approve the station
       }
 
       // Show the button only if both stations are valid and coordinates are available
-      showButton = startIsValid && destinationIsValid && _startLatLng != null && _destinationLatLng != null;
+      showButton = startIsValid &&
+          destinationIsValid &&
+          _startLatLng != null &&
+          _destinationLatLng != null;
       _isStartValid = startIsValid;
       _isDestinationValid = destinationIsValid;
     });
   }
 
-
   // Reset the approval icon if the text in the start or destination field is invalid
   void _resetApprovalIconIfNeeded(bool isStart) {
-    String input = isStart ? _startController.text.toLowerCase().trim() : _destinationController.text.toLowerCase().trim();
+    String input = isStart
+        ? _startController.text.toLowerCase().trim()
+        : _destinationController.text.toLowerCase().trim();
     bool isValid = _itineraryController.stationNames.contains(input);
 
     if (!isValid) {
