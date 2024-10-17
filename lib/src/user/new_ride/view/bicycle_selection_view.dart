@@ -40,106 +40,87 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     _fetchPaymentMethod(); // Fetch payment method when initializing
   }
 
-  // Fetch route information and polyline on initialization
   Future<void> _fetchRouteInfo() async {
-    // Call getRouteInfo with the current waypoints (empty initially)
     await _controller.getRouteInfo(waypoints);
-
-    // Fetch the polyline after getting the route info
     await _controller.getPolyline();
-
-    // Update the UI after fetching the route info and polylines
     setState(() {
-      distance =
-          double.tryParse(_controller.totalDistance.replaceAll(' km', ''));
+      distance = double.tryParse(_controller.totalDistance.replaceAll(' km', ''));
       duration = _controller.estimatedTime;
     });
   }
 
-
-  // Fetch the user's payment method from the database
   Future<void> _fetchPaymentMethod() async {
     PaymentMethodController paymentController = PaymentMethodController();
     String? paymentMethod = await paymentController.fetchPaymentMethod();
 
     setState(() {
       userPaymentMethod = paymentMethod;
-      isLoadingPaymentMethod = false; // Stop loading once payment method is fetched
+      isLoadingPaymentMethod = false;
     });
   }
 
-  // Helper method to return the appropriate image based on the payment method
   Image? _getPaymentImage() {
     if (userPaymentMethod == 'none' || userPaymentMethod == null) {
-      return null; // No image when there's no payment method, use an Icon fallback
+      return null;
     }
 
-    debugPrint('Payment method: $userPaymentMethod');
-    debugPrint('Payment method: $userPaymentMethod');
-    debugPrint('Payment method: $userPaymentMethod');
-    debugPrint('Payment method: $userPaymentMethod');
-    debugPrint('Payment method: $userPaymentMethod');
-
-    // Display images based on the payment method
     switch (userPaymentMethod) {
       case 'google_pay':
         return Image.asset('assets/png/googlePay.png', width: 30, height: 30);
       case 'credit_card':
         return Image.asset('assets/png/mastercard.png', width: 30, height: 30);
       case 'klarna':
-        debugPrint('AAA');
-         debugPrint('AAA');
         return Image.asset('assets/png/klarna.png', width: 30, height: 30);
       default:
-       debugPrint('BBB');
-        debugPrint('BBB');
-        return null; // Fallback, empty widget for unknown payment methods
+        return null;
     }
   }
 
-  // Method to handle payment method selection
   Future<void> _handleStartRide() async {
     if (userPaymentMethod == 'none' || userPaymentMethod == null) {
-      final selectedPaymentMethod =
-          await Navigator.pushNamed(context, '/paymentApp');
+      // Navigate to the payment selection page and await the result
+      final selectedPaymentMethod = await Navigator.pushNamed(context, '/paymentApp');
 
       if (selectedPaymentMethod != null) {
+        // Update the userPaymentMethod with the newly selected method and reload the UI
         setState(() {
           userPaymentMethod = selectedPaymentMethod.toString();
-          _fetchPaymentMethod(); // Reload payment method after selection
+          _fetchPaymentMethod(); // Reload the payment method to reflect in the UI
         });
       }
     } else {
-      // Handle the start ride logic here
-      print('Starting ride with payment method: $userPaymentMethod');
+      // Proceed with starting the ride
+      //******************************************************************** */
+            //******************************************************************** */
+
+      //******************************************************************** */
+
+      //******************************************************************** */
+
+      //******************************************************************** */
+
+      //******************************************************************** */
     }
   }
 
-// Handle map tap to add a waypoint and recalculate the route
+
   void _onMapTap(LatLng position) {
     setState(() {
-      // Clear the previous waypoints and add the new tapped position
       waypoints.clear();
-      waypoints.add(position); // Ajoutez le waypoint à l'emplacement cliqué
- 
-      // Créez un nouveau marqueur pour le waypoint
+      waypoints.add(position);
       waypointMarker = Marker(
-        markerId: MarkerId('waypoint'), // ID fixe pour le waypoint
+        markerId: MarkerId('waypoint'),
         position: position,
         infoWindow: InfoWindow(title: 'Waypoint'),
       );
     });
- 
-    // Update the polyline with the new waypoints and recalculate distance/time
+
     _controller.getPolylineWithWaypoints(waypoints).then((_) async {
-      // Fetch the updated route information with the new waypoint
-      await _controller.getRouteInfo(waypoints); // Pass the waypoints
- 
-      // Update distance and duration based on the fetched route
+      await _controller.getRouteInfo(waypoints);
       setState(() {
         distance =
             double.tryParse(_controller.totalDistance.replaceAll(' km', ''));
-        duration = _controller.estimatedTime; // Get the updated duration
+        duration = _controller.estimatedTime;
       });
     });
   }
@@ -185,17 +166,33 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                     SizedBox(width: 10),
                     Button(
                       text: "Start Ride",
-                      onPressed: _handleStartRide, // Call the method for handling
+                      onPressed: _handleStartRide,
                       isFilled: true,
                       horizontalPadding: 20.0,
                       verticalPadding: 12.0,
                       image: _getPaymentImage(),
                       icon: userPaymentMethod == 'none' ? Icons.warning : null,
                     ),
+                    SizedBox(width: 10),
+                    // Add the info button with a tooltip for price info
+                    Tooltip(
+                      message: 'Price: 1 CHF per minute, minimum charge 5 CHF',
+                      child: IconButton(
+                        icon: Icon(Icons.info_outline),
+                        onPressed: () {
+                          // Show a SnackBar when the info button is clicked
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Price: 1 CHF per minute, minimum charge 5 CHF'),
+                              duration: Duration(seconds: 3), 
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 10),
-                // Display distance and duration in a compact style
                 if (distance != null && duration != null) ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -236,7 +233,6 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                   position: widget.destinationPoint,
                   infoWindow: InfoWindow(title: 'Destination'),
                 ),
-                // Ajoutez le marqueur du waypoint si présent
                 if (waypointMarker != null) waypointMarker!,
               },
             ),

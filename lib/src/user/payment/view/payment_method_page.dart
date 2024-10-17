@@ -104,7 +104,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
             TextButton(
               child: const Text('Delete'),
               onPressed: () {
-                Navigator.of(context).pop(); 
+                Navigator.pop(context, selectedPaymentMethod);
                 _deletePaymentMethod(); 
               },
             ),
@@ -147,7 +147,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
     // After the dialog is closed, update the selected payment method and close the page
     _selectPaymentMethod(PaymentData(paymentMethod: PaymentMethod.googlePay.name));
-    Navigator.pop(context);
+    Navigator.pop(context, selectedPaymentMethod);
   }
 
   void _confirmKlarnaPayment() async {
