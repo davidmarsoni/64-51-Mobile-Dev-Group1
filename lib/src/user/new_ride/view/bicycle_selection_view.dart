@@ -141,7 +141,29 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 10),
-                Text("Choose your bike", style: TextStyle(fontSize: 18)),
+                
+                // Row to align the text and info button at the same level
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // This will push the elements to opposite ends
+                  children: [
+                    Text("Choose your bike", style: TextStyle(fontSize: 18)),
+                    Tooltip(
+                      message: 'Price: 1 CHF per minute, minimum charge 5 CHF',
+                      child: IconButton(
+                        icon: Icon(Icons.info_outline),
+                        onPressed: () {
+                          // Show a SnackBar when the info button is clicked
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Price: 1 CHF per minute, minimum charge 5 CHF'),
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
                 TextField(
                   decoration: InputDecoration(
                     labelText:
@@ -173,23 +195,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                       image: _getPaymentImage(),
                       icon: userPaymentMethod == 'none' ? Icons.warning : null,
                     ),
-                    SizedBox(width: 10),
-                    // Add the info button with a tooltip for price info
-                    Tooltip(
-                      message: 'Price: 1 CHF per minute, minimum charge 5 CHF',
-                      child: IconButton(
-                        icon: Icon(Icons.info_outline),
-                        onPressed: () {
-                          // Show a SnackBar when the info button is clicked
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Price: 1 CHF per minute, minimum charge 5 CHF'),
-                              duration: Duration(seconds: 3), 
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                    SizedBox(width: 10),                    
                   ],
                 ),
                 SizedBox(height: 10),
