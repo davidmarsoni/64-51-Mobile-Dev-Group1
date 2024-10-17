@@ -4,6 +4,7 @@ import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_contr
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 import 'package:valais_roll/src/user/payment/controller/payment_method_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firebase Firestore import
 
 class BicycleSelectionView extends StatefulWidget {
   final LatLng startPoint;
@@ -19,13 +20,15 @@ class BicycleSelectionView extends StatefulWidget {
 class _BicycleSelectionViewState extends State<BicycleSelectionView> {
   late BicycleSelectionController _controller;
   late GoogleMapController _mapController;
-  Marker? waypointMarker; // Marqueur unique pour le waypoint
+  Marker? waypointMarker; // For storing waypoint marker
 
   String? userPaymentMethod;
-  bool isLoadingPaymentMethod = true; // To show a loader while fetching
-  List<LatLng> waypoints = []; // List to store waypoints
-  double? distance; // To store the calculated distance
-  String? duration; // To store the calculated duration
+  bool isLoadingPaymentMethod = true; // Loader while fetching payment method
+  List<LatLng> waypoints = []; // Waypoints list
+  double? distance; // Store calculated distance
+  String? duration; // Store estimated time
+  String enteredBikeCode = ''; // Store entered bike code
+  bool isBikeCodeValid = false; // Track bike code validity
 
   @override
   void initState() {
@@ -33,13 +36,14 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     _controller = BicycleSelectionController(
       startPoint: widget.startPoint,
       destinationPoint: widget.destinationPoint,
-      mode: 'bicycling', // Explicitly set the mode to 'bicycling'
+      mode: 'bicycling', // Mode is set to 'bicycling'
     );
 
-    _fetchRouteInfo();
-    _fetchPaymentMethod(); // Fetch payment method when initializing
+    _fetchRouteInfo(); // Fetch route and polyline on init
+    _fetchPaymentMethod(); // Fetch payment method on init
   }
 
+  // Fetch the route information and polyline
   Future<void> _fetchRouteInfo() async {
     await _controller.getRouteInfo(waypoints);
     await _controller.getPolyline();
@@ -49,6 +53,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     });
   }
 
+  // Fetch the user's payment method from Firestore
   Future<void> _fetchPaymentMethod() async {
     PaymentMethodController paymentController = PaymentMethodController();
     String? paymentMethod = await paymentController.fetchPaymentMethod();
@@ -59,6 +64,20 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     });
   }
 
+  // Check if the bike code exists in Firebase Firestore
+  Future<void> _checkBikeCode(String bikeCode) async {
+    final firestoreInstance = FirebaseFirestore.instance;
+    final doc = await firestoreInstance
+        .collection('bikes')
+        .where('number', isEqualTo: bikeCode) // Assuming 'number' is the field for bike code
+        .get();
+
+    setState(() {
+      isBikeCodeValid = doc.docs.isNotEmpty;
+    });
+  }
+
+  // Get the correct image based on the payment method
   Image? _getPaymentImage() {
     if (userPaymentMethod == 'none' || userPaymentMethod == null) {
       return null;
@@ -76,53 +95,61 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     }
   }
 
+  // Handle the logic for starting a ride
   Future<void> _handleStartRide() async {
     if (userPaymentMethod == 'none' || userPaymentMethod == null) {
-      // Navigate to the payment selection page and await the result
+      // Navigate to the payment selection page if no valid payment method
       final selectedPaymentMethod = await Navigator.pushNamed(context, '/paymentApp');
-
       if (selectedPaymentMethod != null) {
-        // Update the userPaymentMethod with the newly selected method and reload the UI
         setState(() {
           userPaymentMethod = selectedPaymentMethod.toString();
-          _fetchPaymentMethod(); // Reload the payment method to reflect in the UI
+          _fetchPaymentMethod(); // Reload the payment method
         });
       }
-    } else {
-      // Proceed with starting the ride
-      //******************************************************************** */
-            //******************************************************************** */
-
-      //******************************************************************** */
-
-      //******************************************************************** */
-
-      //******************************************************************** */
-
-      //******************************************************************** */
+      return;
     }
+
+    if (!isBikeCodeValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invalid bike code. Please enter a valid bike code.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Proceed with the ride logic if bike code is valid
+    print('Starting ride with payment method: $userPaymentMethod');
+    // Additional ride logic here
   }
 
-
+  // Handle map tap to add a waypoint and recalculate route
   void _onMapTap(LatLng position) {
     setState(() {
-      waypoints.clear();
-      waypoints.add(position);
+      waypoints.clear(); // Clear previous waypoints
+      waypoints.add(position); // Add the new waypoint
+
       waypointMarker = Marker(
-        markerId: MarkerId('waypoint'),
+        markerId: MarkerId('waypoint'), // Use 'waypoint' as the marker ID
         position: position,
         infoWindow: InfoWindow(title: 'Waypoint'),
       );
     });
 
+    // Recalculate the polyline with waypoints
     _controller.getPolylineWithWaypoints(waypoints).then((_) async {
-      await _controller.getRouteInfo(waypoints);
+      await _controller.getRouteInfo(waypoints); // Update route info
       setState(() {
-        distance =
-            double.tryParse(_controller.totalDistance.replaceAll(' km', ''));
+        distance = double.tryParse(_controller.totalDistance.replaceAll(' km', ''));
         duration = _controller.estimatedTime;
       });
     });
+  }
+
+  // Check if both bike code is valid and payment method is available
+  bool _isStartButtonEnabled() {
+    return isBikeCodeValid && userPaymentMethod != null && userPaymentMethod != 'none';
   }
 
   @override
@@ -141,10 +168,10 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 10),
-                
+
                 // Row to align the text and info button at the same level
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // This will push the elements to opposite ends
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Aligns elements to the ends
                   children: [
                     Text("Choose your bike", style: TextStyle(fontSize: 18)),
                     Tooltip(
@@ -152,7 +179,6 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                       child: IconButton(
                         icon: Icon(Icons.info_outline),
                         onPressed: () {
-                          // Show a SnackBar when the info button is clicked
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Price: 1 CHF per minute, minimum charge 5 CHF'),
@@ -166,11 +192,16 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                 ),
                 TextField(
                   decoration: InputDecoration(
-                    labelText:
-                        "Enter the bike code or take a photo of the QR code",
+                    labelText: "Enter the bike code or take a photo of the QR code",
                     suffixIcon: Icon(Icons.camera_alt),
                     border: OutlineInputBorder(),
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      enteredBikeCode = value;
+                    });
+                    _checkBikeCode(enteredBikeCode); // Validate bike code on change
+                  },
                 ),
                 SizedBox(height: 10),
                 Row(
@@ -188,14 +219,16 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                     SizedBox(width: 10),
                     Button(
                       text: "Start Ride",
-                      onPressed: _handleStartRide,
-                      isFilled: true,
+                      onPressed: () {
+                        _handleStartRide();
+                      },
+                      isFilled: _isStartButtonEnabled(), 
+                      color: _isStartButtonEnabled() ? Theme.of(context).primaryColor : Colors.grey, // Grey out when disabled
                       horizontalPadding: 20.0,
                       verticalPadding: 12.0,
                       image: _getPaymentImage(),
                       icon: userPaymentMethod == 'none' ? Icons.warning : null,
                     ),
-                    SizedBox(width: 10),                    
                   ],
                 ),
                 SizedBox(height: 10),
