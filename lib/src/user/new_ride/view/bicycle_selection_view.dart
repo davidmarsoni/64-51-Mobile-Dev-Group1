@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
+import 'package:valais_roll/src/user/new_ride/view/ride.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 import 'package:valais_roll/src/user/payment/controller/payment_method_controller.dart';
@@ -9,9 +10,10 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Firebase Firestore imp
 class BicycleSelectionView extends StatefulWidget {
   final LatLng startPoint;
   final LatLng destinationPoint;
+  final String destinationName;
 
   const BicycleSelectionView(
-      {super.key, required this.startPoint, required this.destinationPoint});
+      {super.key, required this.startPoint, required this.destinationPoint, required this.destinationName});
 
   @override
   _BicycleSelectionViewState createState() => _BicycleSelectionViewState();
@@ -119,9 +121,18 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       return;
     }
 
-    // Proceed with the ride logic if bike code is valid
-    print('Starting ride with payment method: $userPaymentMethod');
-    // Additional ride logic here
+    // Start the ride
+     Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Ride(
+          startPoint: widget.startPoint,
+          destinationPoint: widget.destinationPoint,
+          destinationName: widget.destinationName,
+          waypoints: waypoints, // Pass the waypoints if there are any
+        ),
+      ),
+    );
   }
 
   // Handle map tap to add a waypoint and recalculate route

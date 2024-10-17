@@ -245,6 +245,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                         builder: (context) => BicycleSelectionView(
                           startPoint: _startLatLng!,
                           destinationPoint: _destinationLatLng!,
+                          destinationName: _approvedDestinationStation ?? '',
                         ),
                       ),
                     );
