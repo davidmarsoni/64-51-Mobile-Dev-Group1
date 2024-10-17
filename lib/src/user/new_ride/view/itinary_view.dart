@@ -297,6 +297,21 @@ class _ItineraryPageState extends State<ItineraryPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
+                  title: Text('Start your journey to this station'),
+                  subtitle: Text('Station: $stationName'),
+                  onTap: () {
+                    // Inside _onStationMarkerTapped method
+                    Navigator.pushNamed(
+                      context,
+                      '/itinaryStation',
+                      arguments: {
+                        'stationName': stationName,           
+                        'stationPosition': stationPosition,  
+                      },
+                    );
+                  },
+                ),
+                ListTile(
                   title: Text('Select as Start Station'),
                   subtitle: Text('Station: $stationName'),
                   trailing: _approvedStartStation == stationName
@@ -341,22 +356,6 @@ class _ItineraryPageState extends State<ItineraryPage> {
                       Navigator.pop(context);
                     });
                     _checkIfBothLocationsAreStations();
-                  },
-                ),
-                // have a third ListTile to go to the station and open a new page called "itinary_station_view.dart"
-                ListTile(
-                  title: Text('Start your journey to this station'),
-                  subtitle: Text('Station: $stationName'),
-                  onTap: () {
-                    // Inside _onStationMarkerTapped method
-                    Navigator.pushNamed(
-                      context,
-                      '/itinaryStation',
-                      arguments: {
-                        'stationName': stationName,           
-                        'stationPosition': stationPosition,  
-                      },
-                    );
                   },
                 ),
               ],
