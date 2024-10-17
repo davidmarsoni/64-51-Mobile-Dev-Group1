@@ -186,7 +186,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                           labelText: 'Start',
                           filled: true,
                           fillColor: _isStartValid
-                              ? Color.fromARGB(255, 194, 225, 169)
+                              ? Color.fromARGB(255, 154, 236, 29)
                               : Colors.grey[200],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -209,7 +209,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                           labelText: 'Destination',
                           filled: true,
                           fillColor: _isDestinationValid
-                              ? Color.fromARGB(255, 194, 225, 169)
+                              ? Color.fromARGB(255, 154, 236, 29)
                               : Colors.grey[200],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
