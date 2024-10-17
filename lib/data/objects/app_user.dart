@@ -24,8 +24,8 @@ class AppUser {
     required this.locality,
     required this.email,
   });
-
-  Map<String, dynamic> toMap() {
+  
+  Map<String, dynamic> toJson() {
     return {
       'uid': uid,
       'name': name,
@@ -39,5 +39,21 @@ class AppUser {
       'locality': locality,
       'email': email,
     };
+  }
+
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    return AppUser(
+      uid: json['uid'],
+      name: json['name'],
+      surname: json['surname'],
+      phone: json['phone'],
+      birthDate: json['birthDate'],
+      username: json['username'],
+      address: json['address'],
+      number: json['number'],
+      npa: json['npa'],
+      locality: json['locality'],
+      email: json['email'],
+    );
   }
 }
