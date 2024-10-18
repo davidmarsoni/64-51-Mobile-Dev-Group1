@@ -220,7 +220,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                     Button(
                       text: "Cancel",
                       onPressed: () {
-                        // Handle cancellation
+                        Navigator.pop(context);
                       },
                       isFilled: true,
                       color: Colors.red,

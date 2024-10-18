@@ -72,45 +72,55 @@ class _ItineraryPageState extends State<ItineraryPage> {
     super.dispose();
   }
 
-  // Method to search for either start or destination and set coordinates
   Future<void> _performSearch(bool isStart) async {
-    String query =
-        isStart ? _startController.text : _destinationController.text;
+    String query = isStart ? _startController.text : _destinationController.text;
 
     if (query.isNotEmpty) {
+      // Normalize input by trimming and converting to lowercase
       String normalizedQuery = query.toLowerCase().trim();
+      
+      print("Searching for station: $normalizedQuery");
 
-      // Check if the input matches a station name
+      // Check if the normalized input matches a station name
       if (_itineraryController.stationNames.contains(normalizedQuery)) {
+        // Find the marker that matches the station name
         Marker? matchingMarker = _itineraryController.markers.firstWhere(
-          (marker) =>
-              marker.infoWindow.title!.split('|')[0].toLowerCase().trim() ==
-              normalizedQuery,
+          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == normalizedQuery,
           orElse: () => Marker(markerId: MarkerId('default')),
         );
 
-        setState(() {
-          if (isStart) {
-            _startLatLng = matchingMarker.position;
-            _approvedStartStation = matchingMarker.infoWindow.title!
-                .split('|')[0]; // Set the approved station
-          } else {
-            _destinationLatLng = matchingMarker.position;
-            _approvedDestinationStation = matchingMarker.infoWindow.title!
-                .split('|')[0]; // Set the approved station
+        if (matchingMarker.markerId.value != 'default') {
+          // Check the station's capacity before selecting it
+          bool capacity = await _itineraryController.capacity(matchingMarker.infoWindow.title!.split('|')[0]);
+          if (!capacity) {
+            _showErrorMessage("This start station has no available bicycles, please choose another start station.");
+            return;
           }
-        });
 
-        _checkIfBothLocationsAreStations();
-        return;
+          setState(() {
+            if (isStart) {
+              _startLatLng = matchingMarker.position;
+              _approvedStartStation = matchingMarker.infoWindow.title!.split('|')[0]; // Set the approved station
+            } else {
+              _destinationLatLng = matchingMarker.position;
+              _approvedDestinationStation = matchingMarker.infoWindow.title!.split('|')[0]; // Set the approved station
+            }
+          });
+
+          _checkIfBothLocationsAreStations();
+          return;
+        } else {
+          print("No matching station found.");
+        }
+      } else {
+        print("Station not found in the list.");
       }
 
-      // Geocode the input as a city name if not a station
+      // If input is not a station name, try to geocode the input as a city or location
       try {
         List<Location> locations = await locationFromAddress(query);
         if (locations.isNotEmpty) {
-          LatLng latLng =
-              LatLng(locations.first.latitude, locations.first.longitude);
+          LatLng latLng = LatLng(locations.first.latitude, locations.first.longitude);
 
           final GoogleMapController controller = await _mapController.future;
           controller.animateCamera(CameraUpdate.newCameraPosition(
@@ -120,12 +130,10 @@ class _ItineraryPageState extends State<ItineraryPage> {
           setState(() {
             if (isStart) {
               _startLatLng = latLng;
-              _approvedStartStation =
-                  null; // Clear approval if it's not a station
+              _approvedStartStation = null; // Clear approval if it's not a station
             } else {
               _destinationLatLng = latLng;
-              _approvedDestinationStation =
-                  null; // Clear approval if it's not a station
+              _approvedDestinationStation = null; // Clear approval if it's not a station
             }
           });
 
@@ -237,8 +245,15 @@ class _ItineraryPageState extends State<ItineraryPage> {
               bottom: 30,
               right: 30,
               child: FloatingActionButton.extended(
-                onPressed: () {
+                onPressed: () async {
                   if (_startLatLng != null && _destinationLatLng != null) {
+                    // Check station capacity again before navigating
+                    bool capacity = await _itineraryController.capacity(_startController.text); 
+                    if (!capacity) {
+                      _showErrorMessage("This start station has no available bicycles, please choose another start station.");
+                      return;
+                    }
+                    
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -266,11 +281,9 @@ class _ItineraryPageState extends State<ItineraryPage> {
             child: FloatingActionButton(
               heroTag: "recenterButton",
               onPressed: () async {
-                LatLng? currentLocation =
-                    await _itineraryController.getPosition();
+                LatLng? currentLocation = await _itineraryController.getPosition();
                 if (currentLocation != null) {
-                  final GoogleMapController controller =
-                      await _mapController.future;
+                  final GoogleMapController controller = await _mapController.future;
                   controller.animateCamera(CameraUpdate.newCameraPosition(
                     CameraPosition(target: currentLocation, zoom: 14.0),
                   ));
@@ -301,7 +314,6 @@ class _ItineraryPageState extends State<ItineraryPage> {
                   title: Text('Start your journey to this station'),
                   subtitle: Text('Station: $stationName'),
                   onTap: () {
-                    // Inside _onStationMarkerTapped method
                     Navigator.pushNamed(
                       context,
                       '/itinaryStation',
@@ -318,21 +330,28 @@ class _ItineraryPageState extends State<ItineraryPage> {
                   trailing: _approvedStartStation == stationName
                       ? Icon(Icons.check_circle, color: Colors.green)
                       : null,
-                  onTap: () {
-                    setState(() {
-                      _startLatLng = stationPosition;
-                      _startController.text = stationName;
-                      _approvedStartStation = stationName; 
-
-                      // Hide the approval icon after 1 second
-                      Timer(Duration(seconds: 1), () {
-                        setState(() {
-                          _approvedStartStation = null;
-                        });
-                      });
+                  onTap: () async {
+                    bool startCapacity = await _itineraryController.capacity(stationName);
+                    
+                    if (!startCapacity) {
                       Navigator.pop(context);
-                    });
-                    _checkIfBothLocationsAreStations();
+                      _showErrorMessage("This start station has no available bicycles, please choose another station.");
+                    } else {
+                      setState(() {
+                        _startLatLng = stationPosition;
+                        _startController.text = stationName;
+                        _approvedStartStation = stationName; 
+
+                        // Hide the approval icon after 1 second
+                        Timer(Duration(seconds: 1), () {
+                          setState(() {
+                            _approvedStartStation = null;
+                          });
+                        });
+                        Navigator.pop(context);
+                      });
+                      _checkIfBothLocationsAreStations();
+                    }
                   },
                 ),
                 ListTile(
@@ -371,46 +390,32 @@ class _ItineraryPageState extends State<ItineraryPage> {
   void _checkIfBothLocationsAreStations() {
     setState(() {
       String startInput = _startController.text.toLowerCase().trim();
-      String destinationInput =
-          _destinationController.text.toLowerCase().trim();
+      String destinationInput = _destinationController.text.toLowerCase().trim();
 
-      bool startIsValid =
-          _itineraryController.stationNames.contains(startInput);
-      bool destinationIsValid =
-          _itineraryController.stationNames.contains(destinationInput);
+      bool startIsValid = _itineraryController.stationNames.contains(startInput);
+      bool destinationIsValid = _itineraryController.stationNames.contains(destinationInput);
 
       // Update start and destination LatLngs if valid
       if (startIsValid) {
         Marker? matchingStartMarker = _itineraryController.markers.firstWhere(
-          (marker) =>
-              marker.infoWindow.title!.split('|')[0].toLowerCase().trim() ==
-              startInput,
+          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == startInput,
           orElse: () => Marker(markerId: MarkerId('default')),
         );
         _startLatLng = matchingStartMarker.position;
-        _approvedStartStation = matchingStartMarker.infoWindow.title!
-            .split('|')[0]; // Approve the station
+        _approvedStartStation = matchingStartMarker.infoWindow.title!.split('|')[0]; // Approve the station
       }
 
       if (destinationIsValid) {
-        Marker? matchingDestinationMarker =
-            _itineraryController.markers.firstWhere(
-          (marker) =>
-              marker.infoWindow.title!.split('|')[0].toLowerCase().trim() ==
-              destinationInput,
+        Marker? matchingDestinationMarker = _itineraryController.markers.firstWhere(
+          (marker) => marker.infoWindow.title!.split('|')[0].toLowerCase().trim() == destinationInput,
           orElse: () => Marker(markerId: MarkerId('default')),
         );
         _destinationLatLng = matchingDestinationMarker.position;
-        _approvedDestinationStation = matchingDestinationMarker
-            .infoWindow.title!
-            .split('|')[0]; // Approve the station
+        _approvedDestinationStation = matchingDestinationMarker.infoWindow.title!.split('|')[0]; // Approve the station
       }
 
       // Show the button only if both stations are valid and coordinates are available
-      showButton = startIsValid &&
-          destinationIsValid &&
-          _startLatLng != null &&
-          _destinationLatLng != null;
+      showButton = startIsValid && destinationIsValid && _startLatLng != null && _destinationLatLng != null;
       _isStartValid = startIsValid;
       _isDestinationValid = destinationIsValid;
     });

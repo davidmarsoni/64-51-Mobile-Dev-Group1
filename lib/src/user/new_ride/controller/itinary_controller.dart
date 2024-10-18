@@ -159,6 +159,33 @@ if (apiKey.isEmpty) {
   }
 }
 
+  Future<bool> capacity(String stationName) async {
+    try {
+      print(stationName);
+      // Query Firestore for the station document with the given name
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('stations')
+          .where('Name', isEqualTo: stationName.trim())
+          .get();
+
+      // Check if any station was found
+      if (snapshot.docs.isEmpty) {
+        print("No station found with the name $stationName");
+        return false;
+      }
+
+      // Extract the number of bicycles from the station's document
+      DocumentSnapshot stationDoc = snapshot.docs.first;
+      int nbrBicycles = stationDoc['NbrBicycle'];
+
+      // Return true if there are more than 0 bicycles, false otherwise
+      return nbrBicycles > 0;
+    } catch (e) {
+      print("Error checking capacity: $e");
+      return false;
+    }
+  }
+
   void onTextChanged(String searchText, bool isStart) {
     _suggestedStations = _stationNames
         .where((station) =>
