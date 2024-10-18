@@ -250,7 +250,6 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: 'Payment Methods',
       isBottomNavBarEnabled: true,
       body: Padding(
         padding: const EdgeInsets.all(16.0),

@@ -27,7 +27,7 @@ class UserApp extends StatelessWidget {
     return MaterialApp(
       title: 'ValaisRoll',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF309874)),
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,

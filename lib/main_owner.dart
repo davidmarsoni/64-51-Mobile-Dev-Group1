@@ -27,7 +27,7 @@ class OwnerApp extends StatelessWidget {
     return MaterialApp(
       title: 'ValaisRoll Admin',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF309874)),
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,

@@ -224,7 +224,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: 'Create Account',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(

@@ -60,10 +60,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Row(
         children: [
-          SvgPicture.asset(
-            'assets/svg/logo.svg', // Path to your logo image
-            height: 24, // Adjust the height as needed
-          ),
+          Image.asset('assets/png/logo.png', width: 30, height: 30),
           const SizedBox(width: 8), // Add some space between the logo and the title
           Text(title),
         ],
