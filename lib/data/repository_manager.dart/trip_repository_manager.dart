@@ -25,9 +25,13 @@ class TripRepositoryManager {
       // Create bike history
       String bikeHistoryId = await _bikeHistoryRepository.createHistory(userRef, bikeRef, startStationRef);
 
-      // Remove station reference from bike
+      // Remove station reference from bike and bike reference from station
       await _bikeRepository.removeStationRefFromBike(bikeRef);
       await _stationRepository.removeBikeRef(startStationRef, bikeRef);
+
+      //set the bike state to in use
+      await _bikeRepository.setBikeStatusInUse(bikeRef);
+
      
 
       return 'Trip started successfully with UserHistory ID: $userHistoryId and BikeHistory ID: $bikeHistoryId';
@@ -73,9 +77,12 @@ class TripRepositoryManager {
       // Create station history for deposit
       await _stationHistoryRepository.createHistory(endStationRef, userRef, userHistory!.bikeRef, StationHistoryStatus.deposit);
 
-      // Add station reference to bike
+      // Add station reference to bike and bike reference to station
       await _bikeRepository.addStationRefToBike(bikeRef, endStationRef);
       await _stationRepository.addBikeRef(endStationRef, bikeRef);
+
+      //set the bike state to available
+      await _bikeRepository.setBikeStatusAvailable(bikeRef);
 
       return 'Trip ended successfully';
     } catch (e) {
