@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:valais_roll/src/owner/controller/owner_bikes_controller.dart';
 import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/data/objects/Station.dart';
 import 'package:valais_roll/data/repository/station_repository.dart';
-import 'package:valais_roll/data/enums/BikeState.dart';
+import 'package:valais_roll/data/enums/bikeState.dart';
 import 'package:valais_roll/src/owner/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart'; // Import the Button widget
 
@@ -49,9 +50,13 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
         return BasePage(
           body: Scaffold(
             appBar: AppBar(
+              elevation: 0, // Remove any shadow
               title: Row(
                 children: [
-                  Text('Bikes'),
+                  Text(
+                    'Bikes',
+                    style: TextStyle(color: Colors.black),
+                  ),
                   Spacer(),
                   OutlinedButton(
                     onPressed: () {
@@ -107,18 +112,29 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
                               itemCount: controller.filteredBikes.length,
                               itemBuilder: (context, index) {
                                 final bike = controller.filteredBikes[index];
+                                final stationName = _stations.firstWhere(
+                                  (station) => station.id == bike.stationReference,
+                                  orElse: () => Station(name: 'No Station', id: '', bikeReferences: [], coordinates: GeoPoint(0, 0), address: ''),
+                                ).name;
+
                                 return ListTile(
                                   title: Text(bike.name),
-                                  subtitle: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: _getColorForBikeState(bike.bike_state),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      bike.bike_state.toString().split('.').last,
-                                      style: TextStyle(color: Colors.white),
-                                    ),
+                                  subtitle: Row(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: _getColorForBikeState(bike.bike_state),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          bike.bike_state.toString().split('.').last,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(stationName!),
+                                    ],
                                   ),
                                   trailing: IconButton(
                                     icon: Icon(Icons.arrow_forward),
@@ -408,6 +424,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Bike deleted successfully')));
                 setState(() {
                   isViewMode = false;
+                  _clearFormFields(); // Clear form fields after deletion
                 });
                 Navigator.of(context).pop();
               },

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/data/objects/Station.dart';
 import 'package:valais_roll/data/repository/bike_repository.dart';
+import 'package:valais_roll/data/repository/station_repository.dart';
 import 'package:valais_roll/src/owner/controller/owner_stations_controller.dart';
 import 'package:valais_roll/src/owner/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
@@ -28,6 +29,7 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
   List<Bike> _bikesWithNoStation = []; // State variable to store the list of bikes with no station
   List<Bike> _selectedBikes = []; // State variable to store the selected bikes
   final BikeRepository _bikeRepository = BikeRepository(); // Instance of BikeRepository
+  final StationRepository _stationRepository = StationRepository(); // Instance of StationRepository
 
   @override
   void initState() {
@@ -45,6 +47,15 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
       });
     } catch (e) {
       debugPrint('Error fetching bikes: $e');
+    }
+  }
+
+  Future<int> _getAvailableBikesCount(String stationId) async {
+    try {
+      return await _stationRepository.countAvailableBikes(stationId);
+    } catch (e) {
+      debugPrint('Error fetching available bikes count: $e');
+      return 0;
     }
   }
 
@@ -128,26 +139,33 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
                               itemCount: controller.filteredStations.length,
                               itemBuilder: (context, index) {
                                 final station = controller.filteredStations[index];
-                                return ListTile(
-                                  title: Text(station.name ?? 'Unknown Name'),
-                                  trailing: IconButton(
-                                    icon: Icon(Icons.arrow_forward),
-                                    onPressed: () {
-                                      setState(() {
-                                        isViewMode = true;
-                                        isEditMode = false;
-                                        _populateFormFields(station);
-                                      });
-                                      controller.selectStation(station);
-                                    },
-                                  ),
-                                  onTap: () {
-                                    setState(() {
-                                      isViewMode = true;
-                                      isEditMode = false;
-                                      _populateFormFields(station);
-                                    });
-                                    controller.selectStation(station);
+                                return FutureBuilder<int>(
+                                  future: _getAvailableBikesCount(station.id!),
+                                  builder: (context, snapshot) {
+                                    final availableBikesCount = snapshot.data ?? 0;
+                                    return ListTile(
+                                      title: Text(station.name ?? 'Unknown Name'),
+                                      subtitle: Text('Available Bikes: $availableBikesCount'),
+                                      trailing: IconButton(
+                                        icon: Icon(Icons.arrow_forward),
+                                        onPressed: () {
+                                          setState(() {
+                                            isViewMode = true;
+                                            isEditMode = false;
+                                            _populateFormFields(station);
+                                          });
+                                          controller.selectStation(station);
+                                        },
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          isViewMode = true;
+                                          isEditMode = false;
+                                          _populateFormFields(station);
+                                        });
+                                        controller.selectStation(station);
+                                      },
+                                    );
                                   },
                                 );
                               },
@@ -405,6 +423,7 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Station deleted successfully')));
                 setState(() {
                   isViewMode = false;
+                  _clearFormFields(); // Clear form fields after deletion
                 });
                 Navigator.of(context).pop(); // Dismiss the dialog
                 _fetchBikes(); // Refresh the list of available bikes

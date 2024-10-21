@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/Station.dart';
 import 'package:valais_roll/data/objects/bike.dart';
@@ -6,7 +5,6 @@ import 'package:valais_roll/data/repository/bike_repository.dart';
 import 'package:valais_roll/data/repository/station_repository.dart';
 
 class OwnerBikesController extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final BikeRepository _bikeRepository = BikeRepository();
   final StationRepository _stationRepository = StationRepository();
   List<Bike> _bikes = [];
@@ -52,71 +50,29 @@ class OwnerBikesController extends ChangeNotifier {
     }
   }
 
-    Future<void> addBike(Bike bike) async {
-    // Add the bike to the 'bikes' collection
-    final docRef = await _firestore.collection('bikes').add(bike.toJson());
-    bike.id = docRef.id; // Assign the generated ID to the bike
-    _bikes.add(bike);
-    notifyListeners();
-  
-    // Update the station document to include the bike reference
-    if (bike.stationReference.isNotEmpty) {
-      final stationRepository = StationRepository();
-      await stationRepository.addBikeRef(bike.stationReference, docRef.id);
+  Future<void> addBike(Bike bike) async {
+    try {
+      await _bikeRepository.addBike(bike);
+      _bikes.add(bike);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error adding bike: $e');
     }
   }
 
-    Future<void> updateBike(Bike bike) async {
-      try {
-        if (bike.id == null) {
-          throw Exception('Bike ID is null');
-        }
-    
-        // Fetch the previous bike data to get the previous station reference
-        Bike? previousBike = await _bikeRepository.getBikeById(bike.id!);
-        if (previousBike == null) {
-          throw Exception('Previous bike data not found');
-        }
-    
-        final stationRepository = StationRepository();
-    
-        // Remove the bike reference from the previous station if it exists
-        if (previousBike.stationReference.isNotEmpty) {
-          await stationRepository.deleteBikeRef(previousBike.stationReference, bike.id!);
-        }
-    
-        // Update the bike data
-        await _bikeRepository.updateBike(bike.id!, bike);
-    
-        // Add the bike reference to the new station
-        if (bike.stationReference.isNotEmpty) {
-          await stationRepository.addBikeRef(bike.stationReference, bike.id!);
-        }
-    
-        await _fetchBikes(); // Refresh the list of bikes after update
-        notifyListeners();
-      } catch (e) {
-        debugPrint('Error updating bike: $e');
-      }
+  Future<void> updateBike(Bike bike) async {
+    try {
+      await _bikeRepository.updateBike(bike);
+      await _fetchBikes(); // Refresh the list of bikes after update
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error updating bike: $e');
+    }
   }
 
-    Future<void> deleteBike(Bike bike) async {
+  Future<void> deleteBike(Bike bike) async {
     try {
-      if (bike.id == null) {
-        throw Exception('Bike ID is null');
-      }
-  
-      final stationRepository = StationRepository();
-  
-      // Remove the bike reference from the station if it exists
-      if (bike.stationReference.isNotEmpty) {
-        await stationRepository.deleteBikeRef(bike.stationReference, bike.id!);
-      }
-  
-      // Delete the bike from the repository
-      await _bikeRepository.deleteBike(bike.id!);
-  
-      // Remove the bike from the local list and notify listeners
+      await _bikeRepository.deleteBike(bike);
       _bikes.removeWhere((b) => b.id == bike.id);
       notifyListeners();
     } catch (e) {

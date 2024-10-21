@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:valais_roll/data/enums/BikeState.dart';
+import 'package:flutter/foundation.dart';
+import 'package:valais_roll/data/enums/bikeState.dart';
 import 'package:valais_roll/data/objects/bike.dart';
+import 'package:valais_roll/data/repository/station_repository.dart';
 
 class BikeRepository {
   final CollectionReference _bikesCollection = FirebaseFirestore.instance.collection('bikes');
@@ -10,7 +11,10 @@ class BikeRepository {
   Future<String> addBike(Bike bike) async {
     try {
       DocumentReference docRef = await _bikesCollection.add(bike.toJson());
-      bike.id = docRef.id; // Assign the generated ID to the bike
+      bike.id = docRef.id; 
+      if (bike.stationReference.isNotEmpty) {
+        await addBikeRefToStation(bike.stationReference, bike.id!);
+      }
       return 'Bike added successfully';
     } catch (e) {
       return 'Error adding bike: $e';
@@ -18,9 +22,27 @@ class BikeRepository {
   }
 
   // Update an existing bike
-  Future<String> updateBike(String id, Bike bike) async {
+  Future<String> updateBike(Bike bike) async {
     try {
-      await _bikesCollection.doc(id).update(bike.toJson());
+      if (bike.id == null) {
+        throw Exception('Bike ID is null');
+      }
+
+      Bike? previousBike = await getBikeById(bike.id!);
+      if (previousBike == null) {
+        throw Exception('Previous bike data not found');
+      }
+
+      if (previousBike.stationReference.isNotEmpty) {
+        await removeBikeRefToStation(previousBike.stationReference, bike.id!);
+      }
+
+      await _bikesCollection.doc(bike.id!).update(bike.toJson());
+
+      if (bike.stationReference.isNotEmpty) {
+        await addBikeRefToStation(bike.stationReference, bike.id!);
+      }
+
       return 'Bike updated successfully';
     } catch (e) {
       return 'Error updating bike: $e';
@@ -28,12 +50,52 @@ class BikeRepository {
   }
 
   // Delete a bike
-  Future<String> deleteBike(String id) async {
+  Future<String> deleteBike(Bike bike) async {
     try {
-      await _bikesCollection.doc(id).delete();
+      if (bike.id == null) {
+        throw Exception('Bike ID is null');
+      }
+
+      if (bike.stationReference.isNotEmpty) {
+        debugPrint('Removing bike reference from station: ${bike.stationReference}');
+        debugPrint('Bike ID: ${bike.id}');
+        await removeBikeRefToStation(bike.stationReference, bike.id!);
+      }
+
+      await _bikesCollection.doc(bike.id!).delete();
       return 'Bike deleted successfully';
     } catch (e) {
       return 'Error deleting bike: $e';
+    }
+  }
+
+  // Add bike reference to station
+  Future<void> addBikeRefToStation(String stationReference, String bikeId) async {
+    final stationRepository = StationRepository();
+    await stationRepository.addBikeRef(stationReference, bikeId);
+  }
+
+  // Delete bike reference from station
+  Future<void> removeBikeRefToStation(String stationReference, String bikeId) async {
+    final stationRepository = StationRepository();
+    await stationRepository.removeBikeRef(stationReference, bikeId);
+  }
+
+  //add station reference to bike
+  Future<void> addStationRefToBike(String bikeId, String stationId) async {
+    try {
+      await _bikesCollection.doc(bikeId).update({'stationReference': stationId});
+    } catch (e) {
+      print('Error adding station reference to bike: $e');
+    }
+  }
+
+  //remove station reference from bike
+  Future<void> removeStationRefFromBike(String bikeId) async {
+    try {
+      await _bikesCollection.doc(bikeId).update({'stationReference': ''});
+    } catch (e) {
+      print('Error removing station reference from bike: $e');
     }
   }
 
@@ -52,7 +114,6 @@ class BikeRepository {
 
   // Get all bikes, ordered by name
   Future<List<Bike>> getAllBikes() async {
-    debugPrint('Getting all bikes');
     try {
       QuerySnapshot querySnapshot = await _bikesCollection.orderBy('name').get();
       return querySnapshot.docs.map((doc) {
@@ -129,25 +190,16 @@ class BikeRepository {
       QuerySnapshot querySnapshot = await _bikesCollection
           .where('stationReference', isEqualTo: '')
           .get();
-
-      // Debug print all the bikes with no station
-      for (var doc in querySnapshot.docs) {
-        debugPrint('Bike with no station: ${doc.data()}');
-      }
-
-      if (querySnapshot.docs.isEmpty) {
-        debugPrint('No bikes found with no station.');
-      }
-
       return querySnapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id; // Add the document ID to the data
-        debugPrint('Data: $data');
+        
         return Bike.fromJson(data);
       }).toList();
     } catch (e) {
-      debugPrint('Error getting bikes with no station: $e');
       return [];
     }
   }
+
+
 }

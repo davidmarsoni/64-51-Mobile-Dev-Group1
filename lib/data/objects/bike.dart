@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:valais_roll/data/enums/BikeState.dart';
+import 'package:valais_roll/data/enums/bikeState.dart';
 
 class Bike {
   String? id; // Add an ID field

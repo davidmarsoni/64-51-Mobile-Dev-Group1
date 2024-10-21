@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:valais_roll/data/enums/BikeState.dart';
+import 'package:valais_roll/data/enums/bikeState.dart';
 import 'package:valais_roll/data/objects/Station.dart';
 import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/data/repository/bike_repository.dart';
@@ -18,7 +18,6 @@ class StationRepository {
         return Station.fromJson(data);
       }).toList();
     } catch (e) {
-      debugPrint('Error fetching stations: $e');
       return [];
     }
   }
@@ -33,14 +32,8 @@ class StationRepository {
   
       // Update the bikes with the station reference
       for (var bikeref in station.bikeReferences) {
-        if (bikeref != null) {
-          Bike? fetchedBike = await _bikeRepository.getBikeById(bikeref);
-          if (fetchedBike != null) {
-            // Add the station ID to the bike
-            fetchedBike.stationReference = stationId;
-            // Update the bike in the bike repository
-            await _bikeRepository.updateBike(bikeref, fetchedBike);
-          }
+        if (bikeref.isNotEmpty) {
+          await _bikeRepository.addStationRefToBike(bikeref, stationId);
         }
       }
   
@@ -58,27 +51,17 @@ class StationRepository {
   
       // Remove the station reference from the previous bikes
       for (var previousBikeRef in previousStation.bikeReferences) {
-        if (previousBikeRef != null) {
-          Bike? previousBike = await _bikeRepository.getBikeById(previousBikeRef);
-          if (previousBike != null) {
-            // Remove the station ID from the bike
-            previousBike.stationReference = '';
-            // Update the bike in the bike repository
-            await _bikeRepository.updateBike(previousBikeRef, previousBike);
-          }
+        if (previousBikeRef.isNotEmpty) {
+          debugPrint('Previous bike ref: $previousBikeRef');
+          await _bikeRepository.removeStationRefFromBike(previousBikeRef);
         }
       }
   
       // Update the newly added bikes with the station reference
       for (var newBikeRef in station.bikeReferences) {
-        if (newBikeRef != null) {
-          Bike? newBike = await _bikeRepository.getBikeById(newBikeRef);
-          if (newBike != null) {
-            // Add the station ID to the bike
-            newBike.stationReference = station.id!;
-            // Update the bike in the bike repository
-            await _bikeRepository.updateBike(newBikeRef, newBike);
-          }
+        if (newBikeRef.isNotEmpty) {
+          debugPrint('New bike ref: $newBikeRef');
+          await _bikeRepository.addStationRefToBike(newBikeRef, station.id!);
         }
       }
   
@@ -92,6 +75,7 @@ class StationRepository {
 
   Future<String> deleteStation(String id) async {
     try {
+      debugPrint('Deleting station with ID: $id');
       // Retrieve the station data to get the bike references
       DocumentSnapshot docSnapshot = await _stationsCollection.doc(id).get();
       if (docSnapshot.exists) {
@@ -99,14 +83,8 @@ class StationRepository {
   
         // Remove the station reference from each bike
         for (var bikeRef in station.bikeReferences) {
-          if (bikeRef != null) {
-            Bike? bike = await _bikeRepository.getBikeById(bikeRef);
-            if (bike != null) {
-              // Remove the station ID from the bike
-              bike.stationReference = '';
-              // Update the bike in the bike repository
-              await _bikeRepository.updateBike(bikeRef, bike);
-            }
+          if (bikeRef.isNotEmpty) {
+            await _bikeRepository.removeStationRefFromBike(bikeRef);
           }
         }
       }
@@ -143,7 +121,7 @@ class StationRepository {
     }
   }
 
-  Future<String> deleteBikeRef(String stationId, String bikeRef) async {
+  Future<String> removeBikeRef(String stationId, String bikeRef) async {
     try {
       // Update the station document to remove the bike reference
       await _stationsCollection.doc(stationId).update({
@@ -158,20 +136,21 @@ class StationRepository {
   Future<int> countAvailableBikes(String stationId) async {
     try {
       int availableBikeCount = 0;
-      Station station = (await getStationById(stationId))!;
+      Station? station = await getStationById(stationId);
 
-      for (var bikeRef in station.bikeReferences) {
-        if (bikeRef != null) {
-          Bike? bike = await _bikeRepository.getBikeById(bikeRef);
-          if (bike != null && bike.bike_state == BikeState.available) {
-            availableBikeCount++;
+      if (station != null) {
+        for (var bikeRef in station.bikeReferences) {
+          if (bikeRef.isNotEmpty) {
+            Bike? bike = await _bikeRepository.getBikeById(bikeRef);
+            if (bike != null && bike.bike_state == BikeState.available) {
+              availableBikeCount++;
+            }
           }
         }
       }
 
       return availableBikeCount;
     } catch (e) {
-      debugPrint('Error counting available bikes: $e');
       return 0;
     }
   }

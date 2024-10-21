@@ -1,0 +1,1 @@
+enum StationHistoryStatus { pickup, deposit }
