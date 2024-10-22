@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:valais_roll/data/enums/bikeState.dart';
 import 'package:valais_roll/data/objects/user_history.dart';
 import 'package:valais_roll/data/repository/user_history_repository.dart';
 import 'package:valais_roll/data/repository/station_history_repository.dart';
@@ -16,6 +17,28 @@ class TripRepositoryManager {
 
   Future<String> startTrip(String userRef, String bikeRef, String startStationRef) async {
     try {
+      //verification part
+
+      // Verify that the user has no active trip
+      String? lastUserHistory = await _userHistoryRepository.getLastHistory(userRef);
+
+      if (lastUserHistory != null) {
+        return 'User already has an active trip';
+      }
+
+      // verify that the bike is available and it is in the station of the departure
+      var bike = await _bikeRepository.getBikeById(bikeRef);
+      if (bike == null) {
+        return 'Bike not found';
+      }
+      if (bike.bike_state != BikeState.available) {
+        return 'Bike is not available';
+      }
+
+      if(bike.stationReference != startStationRef){
+        return 'Bike is not in start station';
+      }
+
       // Create user history
       String userHistoryId = await _userHistoryRepository.createHistory(startStationRef, bikeRef, userRef);
 
@@ -34,22 +57,33 @@ class TripRepositoryManager {
 
      
 
-      return 'Trip started successfully with UserHistory ID: $userHistoryId and BikeHistory ID: $bikeHistoryId';
+      return 'Trip started successfully';
     } catch (e) {
       return 'Error starting trip: $e';
     }
   }
 
-  Future<String> addInterestPoint(String userHistoryId, GeoPoint interestPoint) async {
+  Future<String> addInterestPoint(String userRef, GeoPoint interestPoint) async {
     try {
+      // Get the last user history for the user
+      String? userHistoryId = await _userHistoryRepository.getLastHistory(userRef);
+      if (userHistoryId == null) {
+        return 'No active trip found for the user';
+      }
+
       // Add interest point to user history
       await _userHistoryRepository.addInterestPoint(userHistoryId, interestPoint);
 
-      // Get the last bike history for the user
+      // Add interest point to bike history
       UserHistory? userHistory = await _userHistoryRepository.getHistoryById(userHistoryId);
       if (userHistory != null) {
-        await _bikeHistoryRepository.addInterestPoint(userHistory.bikeRef, interestPoint);
+        // Get the last bike history for the bike
+        String? bikeHistoryId = await _bikeHistoryRepository.getLastHistory(userHistory.bikeRef);
+        if (bikeHistoryId != null) {
+          await _bikeHistoryRepository.addInterestPoint(bikeHistoryId, interestPoint);
+        }
       }
+    
 
       return 'Interest point added successfully';
     } catch (e) {
@@ -71,7 +105,12 @@ class TripRepositoryManager {
       // Get the last bike history for the user
       UserHistory? userHistory = await _userHistoryRepository.getHistoryById(userHistoryId);
       if (userHistory != null) {
-        await _bikeHistoryRepository.endHistory(userHistory.bikeRef, endStationRef);
+        //get the last bike history for the bike
+        String? bikeHistoryId = await _bikeHistoryRepository.getLastHistory(userHistory.bikeRef);
+        // End bike history
+        if (bikeHistoryId != null) {
+          await _bikeHistoryRepository.endHistory(bikeHistoryId, endStationRef);
+        }
       }
 
       // Create station history for deposit

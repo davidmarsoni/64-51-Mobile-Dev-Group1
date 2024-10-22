@@ -68,15 +68,33 @@ class BikeHistoryRepository {
     }
 
 
-    Future<BikeHistory?> getLastHistoryByBike(String bikeRef) async {
-        try {
-        QuerySnapshot querySnapshot = await _historyCollection.where('bikeRef', isEqualTo: bikeRef).orderBy('startTime',descending: true).limit(1).get();
-        if(querySnapshot.docs.isNotEmpty){
-            return BikeHistory.fromJson(querySnapshot.docs.first.data() as Map<String, dynamic>);
+    Future<String?> getLastHistory(String bikeRef) async {
+      try {
+        QuerySnapshot querySnapshot = await _historyCollection
+            .where('bikeRef', isEqualTo: bikeRef)
+            .where('endTime', isNull: true)
+            .orderBy('startTime', descending: true)
+            .limit(1)
+            .get();
+    
+        if (querySnapshot.docs.isNotEmpty) {
+          return querySnapshot.docs.first.id;
         }
-        } catch (e) {
+    
+        // If no history with endTime null is found, check for history with interestPoint not null
+        querySnapshot = await _historyCollection
+            .where('bikeRef', isEqualTo: bikeRef)
+            .where('interestPoint', isNull: false)
+            .orderBy('startTime', descending: true)
+            .limit(1)
+            .get();
+    
+        if (querySnapshot.docs.isNotEmpty) {
+          return querySnapshot.docs.first.id;
+        }
+      } catch (e) {
         print('Error fetching history by ID: $e');
-        }
-        return null;
+      }
+      return null;
     }
 }

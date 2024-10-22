@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/user_history.dart';
 
 class UserHistoryRepository {
@@ -69,7 +70,26 @@ class UserHistoryRepository {
 
   Future<String?> getLastHistory(String userRef) async {
     try {
-      QuerySnapshot querySnapshot = await _historyCollection.where('userRef', isEqualTo: userRef).orderBy('startTime', descending: true).limit(1).get();
+      // First, check for histories where endTime is null
+      QuerySnapshot querySnapshot = await _historyCollection
+          .where('userRef', isEqualTo: userRef)
+          .where('endTime', isNull: true)
+          .orderBy('startTime', descending: true)
+          .limit(1)
+          .get();
+  
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first.id;
+      }
+  
+      // If no history with endTime null is found, check for history with interestPoint not null
+      querySnapshot = await _historyCollection
+          .where('userRef', isEqualTo: userRef)
+          .where('interestPoint', isNull: false)
+          .orderBy('startTime', descending: true)
+          .limit(1)
+          .get();
+  
       if (querySnapshot.docs.isNotEmpty) {
         return querySnapshot.docs.first.id;
       }

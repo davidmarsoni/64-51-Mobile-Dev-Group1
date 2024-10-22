@@ -25,7 +25,7 @@ class Bike {
       'name': name,
       'model': model,
       'number': number,
-      'bike_state': bike_state.toString().split('.').last,
+      'status': bike_state.toString().split('.').last,
       'stationReference': stationReference,
     };
   }
@@ -37,7 +37,7 @@ class Bike {
       name: json['name'],
       model: json['model'],
       number: json['number'],
-      bike_state: BikeState.values.firstWhere((e) => e.toString().split('.').last == json['bike_state']),
+      bike_state: BikeState.values.firstWhere((e) => e.toString().split('.').last == json['status']),
       stationReference: json['stationReference'],
     );
   }
