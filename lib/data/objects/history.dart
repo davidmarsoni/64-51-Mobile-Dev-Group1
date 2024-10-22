@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class UserHistory {
+class History {
   String? id;
   String startStationRef;
   String bikeRef;
@@ -10,7 +10,7 @@ class UserHistory {
   DateTime startTime;
   DateTime? endTime;
 
-  UserHistory({
+  History({
     this.id,
     required this.startStationRef,
     required this.bikeRef,
@@ -33,8 +33,8 @@ class UserHistory {
     };
   }
 
-  factory UserHistory.fromJson(Map<String, dynamic> json) {
-    return UserHistory(
+  factory History.fromJson(Map<String, dynamic> json) {
+    return History(
       id: json['id'],
       startStationRef: json['startStationRef'],
       bikeRef: json['bikeRef'],

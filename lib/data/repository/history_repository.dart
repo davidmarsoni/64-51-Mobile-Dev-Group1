@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:valais_roll/data/objects/user_history.dart';
+import 'package:flutter/foundation.dart';
+import 'package:valais_roll/data/objects/history.dart';
 
-class UserHistoryRepository {
-  final CollectionReference _historyCollection = FirebaseFirestore.instance.collection('user_history');
+class HistoryRepository {
+  final CollectionReference _historyCollection = FirebaseFirestore.instance.collection('history');
 
   Future<String> createHistory(String startStationRef, String bikeRef, String userRef) async {
     try {
-      UserHistory history = UserHistory(
+      History history = History(
         startStationRef: startStationRef,
         bikeRef: bikeRef,
         userRef: userRef,
@@ -43,11 +43,11 @@ class UserHistoryRepository {
     }
   }
 
-  Future<UserHistory?> getHistoryById(String id) async {
+  Future<History?> getHistoryById(String id) async {
     try {
       DocumentSnapshot doc = await _historyCollection.doc(id).get();
       if (doc.exists) {
-        return UserHistory.fromJson(doc.data() as Map<String, dynamic>);
+        return History.fromJson(doc.data() as Map<String, dynamic>);
       }
     } catch (e) {
       print('Error fetching history by ID: $e');
@@ -55,13 +55,26 @@ class UserHistoryRepository {
     return null;
   }
 
-  Future<List<UserHistory>> getHistory(String userRef) async {
+  Future<List<History>> getHistoryByUser(String userRef) async {
     try {
       QuerySnapshot querySnapshot = await _historyCollection.where('userRef', isEqualTo: userRef).get();
       return querySnapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
-        return UserHistory.fromJson(data);
+        return History.fromJson(data);
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<History>> getHistoryByBike(String bikeRef) async {
+    try {
+      QuerySnapshot querySnapshot = await _historyCollection.where('bikeRef', isEqualTo: bikeRef).get();
+      return querySnapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return History.fromJson(data);
       }).toList();
     } catch (e) {
       return [];
@@ -89,8 +102,9 @@ class UserHistoryRepository {
           .orderBy('startTime', descending: true)
           .limit(1)
           .get();
-  
+      
       if (querySnapshot.docs.isNotEmpty) {
+        debugPrint('querySnapshot.docs.isNotEmpty22: ${querySnapshot.docs.isNotEmpty}');
         return querySnapshot.docs.first.id;
       }
     } catch (e) {
@@ -98,5 +112,4 @@ class UserHistoryRepository {
     }
     return null;
   }
-  
 }
