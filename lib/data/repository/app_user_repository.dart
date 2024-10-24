@@ -46,4 +46,18 @@ class AppUserRepository {
     }
     return null;
   }
+
+  // Get all users
+  Future<List<AppUser>> getAllUsers() async {
+    try {
+      QuerySnapshot querySnapshot = await _usersCollection.get();
+      return querySnapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Add the document ID to the data
+        return AppUser.fromJson(data);
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }

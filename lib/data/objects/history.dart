@@ -3,20 +3,30 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class History {
   String? id;
   String startStationRef;
+  String? startStationName;
+  GeoPoint? startStationCoordinates; 
   String bikeRef;
+  String? bikeName;
   String userRef;
   List<GeoPoint> interestPoints;
   String? endStationRef;
+  String? endStationName;
+  GeoPoint? endStationCoordinates; 
   DateTime startTime;
   DateTime? endTime;
 
   History({
     this.id,
     required this.startStationRef,
+    this.startStationName,
+    this.startStationCoordinates,
     required this.bikeRef,
+    this.bikeName,
     required this.userRef,
     this.interestPoints = const [],
     this.endStationRef,
+    this.endStationName,
+    this.endStationCoordinates, 
     required this.startTime,
     this.endTime,
   });
