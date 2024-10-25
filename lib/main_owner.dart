@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:valais_roll/src/app_routes.dart';
 import 'firebase_options.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'package:google_maps_flutter_web/google_maps_flutter_web.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,7 +13,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await dotenv.load(fileName: ".env");
+  registerPlugins(webPluginRegistrar);
   runApp(const OwnerApp());
+}
+
+void registerPlugins(Registrar registrar) {
+  GoogleMapsPlugin.registerWith(registrar);
 }
 
 class OwnerApp extends StatelessWidget {

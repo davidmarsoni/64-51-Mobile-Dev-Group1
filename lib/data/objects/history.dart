@@ -14,6 +14,7 @@ class History {
   GeoPoint? endStationCoordinates; 
   DateTime startTime;
   DateTime? endTime;
+  String? userName;
 
   History({
     this.id,
@@ -29,6 +30,7 @@ class History {
     this.endStationCoordinates, 
     required this.startTime,
     this.endTime,
+    this.userName
   });
 
   Map<String, dynamic> toJson() {
@@ -53,6 +55,7 @@ class History {
       endStationRef: json['endStationRef'],
       startTime: DateTime.parse(json['startTime']),
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
+      userName: json['userName'],
     );
   }
 }
