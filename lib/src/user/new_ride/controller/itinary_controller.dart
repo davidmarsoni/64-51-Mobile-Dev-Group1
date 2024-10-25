@@ -5,6 +5,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as loc;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // For Google API key
+import 'package:valais_roll/data/objects/Station.dart';
+import 'package:valais_roll/data/repository/station_repository.dart';
 
 class ItineraryController {
   final loc.Location _locationController = loc.Location();
@@ -15,6 +17,8 @@ class ItineraryController {
   Map<PolylineId, Polyline> polylines = {};
   List<Marker> get markers => _markers;
   List<String> get suggestedStations => _suggestedStations;
+
+  final StationRepository _stationRepository = StationRepository();
 
   // Stream controllers for location and markers updates
   final StreamController<List<Marker>> _markersController =
@@ -71,20 +75,18 @@ class ItineraryController {
   }
 
   Future<void> fetchStations() async {
-    QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('stations').get();
-    List<Marker> markers = snapshot.docs.map((doc) {
-      GeoPoint geoPoint = doc['Geopoint'];
-      String stationName =
-          doc['Name'].toLowerCase().trim(); // Ensure lowercase and trim spaces
+    List<Station> stations = await _stationRepository.getAllStations();
+    List<Marker> markers = stations.map((station) {
+      GeoPoint geoPoint = station.coordinates;
+      String stationName = station.name!.toLowerCase().trim(); // Ensure lowercase and trim spaces
       _stationNames.add(stationName);
 
       return Marker(
-        markerId: MarkerId(doc.id),
+        markerId: MarkerId(station.id!),
         position: LatLng(geoPoint.latitude, geoPoint.longitude),
         infoWindow: InfoWindow(
-          title: '${doc['Name']} | ${doc['NbrBicycle']} Bicycles',
-          snippet: doc['Description'],
+          title: '${station.name} | ${station.bikeReferences.length} Bicycles',
+          snippet: station.address,
         ),
         icon: BitmapDescriptor.defaultMarker,
       );
@@ -97,67 +99,66 @@ class ItineraryController {
 
   // Method to calculate the route and polyline between the user's current position and a station
   Future<void> getRouteFromCurrentPosition(LatLng destinationPoint, String mode) async {
-  if (_currentP == null) {
-    print("Current position not available.");
-    return;
-  }
-
-  String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
-if (apiKey.isEmpty) {
-  print("API Key is missing!");
-}
-
-
-  // Initialize PolylinePoints for generating polylines
-  PolylinePoints polylinePoints = PolylinePoints();
-
-  TravelMode _getTravelMode(String mode) {
-    switch (mode) {
-      case 'walking':
-        return TravelMode.walking;
-      case 'driving':
-        return TravelMode.driving;
-      case 'bicycling':
-        return TravelMode.bicycling;
-      default:
-        return TravelMode.driving;
+    if (_currentP == null) {
+      print("Current position not available.");
+      return;
     }
-  }
 
-  // Get the route between the current position and the selected station based on the selected mode
+    String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+    if (apiKey.isEmpty) {
+      print("API Key is missing!");
+    }
+
+    // Initialize PolylinePoints for generating polylines
+    PolylinePoints polylinePoints = PolylinePoints();
+
+    TravelMode _getTravelMode(String mode) {
+      switch (mode) {
+        case 'walking':
+          return TravelMode.walking;
+        case 'driving':
+          return TravelMode.driving;
+        case 'bicycling':
+          return TravelMode.bicycling;
+        default:
+          return TravelMode.driving;
+      }
+    }
+
+    // Get the route between the current position and the selected station based on the selected mode
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-    googleApiKey: apiKey,
-    request: PolylineRequest(
-      origin: PointLatLng(_currentP!.latitude, _currentP!.longitude),
-      destination: PointLatLng(destinationPoint.latitude, destinationPoint.longitude),
-      mode: _getTravelMode(mode),
-    ),
-  );
-
-  if (result.points.isNotEmpty) {
-    List<LatLng> polylineCoordinates = [];
-    for (var point in result.points) {
-      polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-    }
-
-    // Create a PolylineId
-    PolylineId id = PolylineId("route_from_current_$mode");
-    Polyline polyline = Polyline(
-      polylineId: id,
-      color: const Color(0xFF4285F4), // Customize color here
-      width: 5,
-      points: polylineCoordinates,
+      googleApiKey: apiKey,
+      request: PolylineRequest(
+        origin: PointLatLng(_currentP!.latitude, _currentP!.longitude),
+        destination: PointLatLng(destinationPoint.latitude, destinationPoint.longitude),
+        mode: _getTravelMode(mode),
+      ),
     );
-    polylines[id] = polyline;
 
-    // Notify listeners about the new polyline
-    if (!_isDisposed) {
-      _markersController.add(_markers);
+    if (result.points.isNotEmpty) {
+      List<LatLng> polylineCoordinates = [];
+      for (var point in result.points) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      }
+
+      // Create a PolylineId
+      PolylineId id = PolylineId("route_from_current_$mode");
+      Polyline polyline = Polyline(
+        polylineId: id,
+        color: const Color(0xFF4285F4), // Customize color here
+        width: 5,
+        points: polylineCoordinates,
+      );
+      polylines[id] = polyline;
+
+      // Notify listeners about the new polyline
+      if (!_isDisposed) {
+        _markersController.add(_markers);
+      }
+    } else {
+      print("No route found or error: ${result.errorMessage}");
     }
-  } else {
-    print("No route found or error: ${result.errorMessage}");
   }
-}
 
   Future<bool> capacity(String stationName) async {
     try {
