@@ -130,7 +130,7 @@ class BikeRepository {
   // Get only available bikes (operational)
   Future<List<Bike>> getAvailableBikes() async {
     try {
-      QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
+      QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: BikeState.available.index).get();
       return querySnapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id; // Add the document ID to the data
@@ -145,7 +145,7 @@ class BikeRepository {
   // Count available bikes (operational)
   Future<int> countAvailableBikes() async {
     try {
-      QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
+      QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: BikeState.available.index).get();
       return querySnapshot.docs.length;
     } catch (e) {
       print('Error counting available bikes: $e');
