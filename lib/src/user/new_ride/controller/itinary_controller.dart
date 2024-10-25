@@ -74,23 +74,24 @@ class ItineraryController {
     return LatLng(locationData.latitude!, locationData.longitude!);
   }
 
-  Future<void> fetchStations() async {
+   Future<void> fetchStations() async {
     List<Station> stations = await _stationRepository.getAllStations();
-    List<Marker> markers = stations.map((station) {
+    List<Marker> markers = await Future.wait(stations.map((station) async {
       GeoPoint geoPoint = station.coordinates;
       String stationName = station.name!.toLowerCase().trim(); // Ensure lowercase and trim spaces
       _stationNames.add(stationName);
-
+      int nbrBicycles = await _stationRepository.countAvailableBikes(station.id!);
+      
       return Marker(
         markerId: MarkerId(station.id!),
         position: LatLng(geoPoint.latitude, geoPoint.longitude),
         infoWindow: InfoWindow(
-          title: '${station.name} | ${station.bikeReferences.length} Bicycles',
+          title: '${station.name} | $nbrBicycles bicycles',
           snippet: station.address,
         ),
         icon: BitmapDescriptor.defaultMarker,
       );
-    }).toList();
+    }).toList());
     _markers = markers;
     if (!_isDisposed) {
       _markersController.add(_markers);
@@ -199,4 +200,5 @@ class ItineraryController {
     _markersController.close();
     _locationControllerStream.close();
   }
+
 }
