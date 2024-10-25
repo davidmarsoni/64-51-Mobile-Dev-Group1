@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/user/new_ride/view/billinfo.dart';
 import 'package:valais_roll/src/user/new_ride/view/payment.dart';
@@ -16,6 +17,7 @@ class Ride extends StatefulWidget {
   final LatLng destinationPoint;
   final String destinationName;
   final List<LatLng> waypoints; 
+  final Bike bike;
 
   const Ride({
     super.key,
@@ -23,6 +25,7 @@ class Ride extends StatefulWidget {
     required this.destinationPoint,
     required this.destinationName,
     this.waypoints = const [],
+    required this.bike,
   });
 
   @override
@@ -378,11 +381,13 @@ void _navigateToBillInfo() {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => BillInfo(userRoute: _userPositions), // Pass user route
+      builder: (context) => BillInfo(
+        userRoute: _userPositions,
+        bike: widget.bike, // Pass the bike with its ID
+      ),
     ),
   );
 }
-
 
   // Helper function to create LatLngBounds from a list of LatLngs
   LatLngBounds _createBoundsFromPositions(List<LatLng> positions) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/user/new_ride/view/ride.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
@@ -31,6 +32,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
   String? duration; // Store estimated time
   String enteredBikeCode = ''; // Store entered bike code
   bool isBikeCodeValid = false; // Track bike code validity
+  Bike? bike;
 
   @override
   void initState() {
@@ -68,16 +70,30 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
 
   // Check if the bike code exists in Firebase Firestore
   Future<void> _checkBikeCode(String bikeCode) async {
-    final firestoreInstance = FirebaseFirestore.instance;
-    final doc = await firestoreInstance
-        .collection('bikes')
-        .where('number', isEqualTo: bikeCode) // Assuming 'number' is the field for bike code
-        .get();
+  final firestoreInstance = FirebaseFirestore.instance;
+  final doc = await firestoreInstance
+      .collection('bikes')
+      .where('number', isEqualTo: bikeCode)
+      .get();
+
+  if (doc.docs.isNotEmpty) {
+    final bikeData = doc.docs.first.data();
+    // Add document ID to bike data for tracking and status update
+    bikeData['id'] = doc.docs.first.id;
+    Bike foundBike = Bike.fromJson(bikeData);
 
     setState(() {
-      isBikeCodeValid = doc.docs.isNotEmpty;
+      isBikeCodeValid = true;
+      bike = foundBike;
+    });
+  } else {
+    setState(() {
+      isBikeCodeValid = false;
+      bike = null;
     });
   }
+}
+
 
   // Get the correct image based on the payment method
   Image? _getPaymentImage() {
@@ -122,17 +138,27 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     }
 
     // Start the ride
-     Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Ride(
-          startPoint: widget.startPoint,
-          destinationPoint: widget.destinationPoint,
-          destinationName: widget.destinationName,
-          waypoints: waypoints, // Pass the waypoints if there are any
+    if (bike != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Ride(
+            startPoint: widget.startPoint,
+            destinationPoint: widget.destinationPoint,
+            destinationName: widget.destinationName,
+            waypoints: waypoints,
+            bike: bike!,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No bike selected. Please enter a valid bike code.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   // Handle map tap to add a waypoint and recalculate route

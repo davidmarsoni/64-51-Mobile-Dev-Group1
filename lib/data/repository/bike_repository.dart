@@ -112,6 +112,19 @@ class BikeRepository {
     return null;
   }
 
+  // get a Bike by number
+  Future<Bike?> getBikeByNbr(String number) async {
+    try {
+      DocumentSnapshot doc = await _bikesCollection.doc(number).get();
+      if (doc.exists) {
+        return Bike.fromJson(doc.data() as Map<String, dynamic>);
+      }
+    } catch (e) {
+      print('Error getting bike: $e');
+    }
+    return null;
+  }
+
   // Get all bikes, ordered by name
   Future<List<Bike>> getAllBikes() async {
     try {

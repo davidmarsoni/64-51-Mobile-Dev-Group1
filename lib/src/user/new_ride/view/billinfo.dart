@@ -1,21 +1,104 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
 import 'package:valais_roll/src/user/new_ride/view/itinary_view.dart';
+import 'package:valais_roll/data/enums/bikeState.dart';
+import 'package:valais_roll/data/repository/bike_repository.dart';
 
 class BillInfo extends StatelessWidget {
   final List<LatLng> userRoute;
+  final BikeRepository bikeRepository = BikeRepository(); 
+  final Bike bike;
 
-  const BillInfo({Key? key, required this.userRoute}) : super(key: key);
+  // Removed 'const' from constructor
+  BillInfo({Key? key, required this.userRoute, required this.bike}) : super(key: key);
+
+  void _showFeedbackDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text(
+            'Provide Feedback on Bike Condition',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Good Condition -> Sets status to available
+              ListTile(
+                leading: Icon(Icons.check_circle_outline, color: Colors.green),
+                title: Text(
+                  'Good Condition',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                onTap: () async {
+                  String resultMessage = await bikeRepository.setBikeStatusAvailable(bike.id!);
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Thank you for your feedback!"),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+
+              // Bad Condition -> Sets status to maintenance
+              ListTile(
+                leading: Icon(Icons.build, color: Colors.orange),
+                title: Text(
+                  'Bad Condition',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                onTap: () async {
+                  String resultMessage = await bikeRepository.setBikeStatusMaintenance(bike.id!);
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Thank you for your feedback!"),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+
+              // Lost -> Sets status to lost
+              ListTile(
+                leading: Icon(Icons.error_outline, color: Colors.red),
+                title: Text(
+                  'Lost',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                onTap: () async {
+                  String resultMessage = await bikeRepository.setBikeStatusLost(bike.id!);
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Thank you for your feedback!"),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     LatLng initialPosition = userRoute.isNotEmpty ? userRoute.first : LatLng(0, 0);
     LatLng destinationPosition = userRoute.isNotEmpty ? userRoute.last : LatLng(0, 0);
 
-    // Create the polyline for the user's route
     Polyline userRoutePolyline = Polyline(
       polylineId: const PolylineId('user_route'),
       color: Colors.blue,
@@ -23,7 +106,6 @@ class BillInfo extends StatelessWidget {
       points: userRoute,
     );
 
-    // Add markers for start and destination points
     Set<Marker> markers = {
       Marker(
         markerId: const MarkerId('start'),
@@ -39,7 +121,6 @@ class BillInfo extends StatelessWidget {
       ),
     };
 
-    // Calculate the distance traveled
     double totalDistance = 0.0;
     for (int i = 0; i < userRoute.length - 1; i++) {
       totalDistance += Geolocator.distanceBetween(
@@ -49,16 +130,14 @@ class BillInfo extends StatelessWidget {
         userRoute[i + 1].longitude,
       );
     }
-    totalDistance = totalDistance / 1000; // Convert meters to kilometers
+    totalDistance = totalDistance / 1000;
 
-    // Calculate the price (CHF 1 per minute, with a minimum of CHF 5)
-    int estimatedDurationMinutes = (totalDistance * 12).toInt(); 
-    double price = (estimatedDurationMinutes * 1).toDouble(); 
+    int estimatedDurationMinutes = (totalDistance * 12).toInt();
+    double price = (estimatedDurationMinutes * 1).toDouble();
     if (price < 5) {
-      price = 5; // Minimum price is CHF 5
+      price = 5;
     }
 
-    // Calculate the LatLngBounds to fit the entire route on the map
     LatLngBounds bounds;
     if (userRoute.isNotEmpty) {
       bounds = LatLngBounds(
@@ -135,8 +214,8 @@ class BillInfo extends StatelessWidget {
                   target: initialPosition,
                   zoom: 14,
                 ),
-                polylines: {userRoutePolyline}, 
-                markers: markers, // Add markers to the map
+                polylines: {userRoutePolyline},
+                markers: markers,
                 myLocationEnabled: false,
                 zoomControlsEnabled: false,
                 scrollGesturesEnabled: false,
@@ -150,20 +229,32 @@ class BillInfo extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(height: 16), // Space between map and button
+            const SizedBox(height: 16),
             Center(
-              child: Button(
-                text: 'Back home',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ItineraryPage(),
-                    ),
-                  );
-                },
-                isFilled: true,
-                horizontalPadding: 60.0,
-                verticalPadding: 18.0,
+              child: Column(
+                children: [
+                  Button(
+                    text: 'Send Feedback',
+                    onPressed: () => _showFeedbackDialog(context),
+                    isFilled: false,
+                    horizontalPadding: 45.0, // Slightly smaller than "Back home" button
+                    verticalPadding: 12.0,
+                  ),
+                  const SizedBox(height: 8),
+                  Button(
+                    text: 'Back home',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ItineraryPage(),
+                        ),
+                      );
+                    },
+                    isFilled: true,
+                    horizontalPadding: 60.0,
+                    verticalPadding: 18.0,
+                  ),
+                ],
               ),
             ),
           ],
