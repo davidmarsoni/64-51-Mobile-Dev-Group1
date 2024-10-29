@@ -30,7 +30,6 @@ class _HistoryListPageState extends State<HistoryListPage> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: 'Ride History',
       body: FutureBuilder<List<History>>(
         future: _fetchUserHistory(),
         builder: (context, snapshot) {
@@ -50,7 +49,7 @@ class _HistoryListPageState extends State<HistoryListPage> {
               final history = histories[index];
               return ListTile(
                 title: Text('Ride on ${history.startTime.toString().substring(0, 10)}'),
-                subtitle: Text('Start: ${history.startStationName ?? 'Unknown'}'),
+                subtitle: Text('Start: ${history.startStationName ?? 'Unknown'} | End: ${history.endStationName ?? 'Unknown'}'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(

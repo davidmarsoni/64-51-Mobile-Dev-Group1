@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:valais_roll/data/objects/bike.dart';
+import 'package:valais_roll/data/repository/bike_repository.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/user/new_ride/view/ride.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
@@ -10,11 +11,18 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Firebase Firestore imp
 
 class BicycleSelectionView extends StatefulWidget {
   final LatLng startPoint;
+  final String startStationId;
   final LatLng destinationPoint;
+  final String destinationStationId;
   final String destinationName;
 
   const BicycleSelectionView(
-      {super.key, required this.startPoint, required this.destinationPoint, required this.destinationName});
+      {super.key, 
+      required this.startPoint, 
+      required this.startStationId,
+      required this.destinationPoint, 
+      required this.destinationStationId,
+      required this.destinationName});
 
   @override
   _BicycleSelectionViewState createState() => _BicycleSelectionViewState();
@@ -68,31 +76,23 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     });
   }
 
-  // Check if the bike code exists in Firebase Firestore
   Future<void> _checkBikeCode(String bikeCode) async {
-  final firestoreInstance = FirebaseFirestore.instance;
-  final doc = await firestoreInstance
-      .collection('bikes')
-      .where('number', isEqualTo: bikeCode)
-      .get();
-
-  if (doc.docs.isNotEmpty) {
-    final bikeData = doc.docs.first.data();
-    // Add document ID to bike data for tracking and status update
-    bikeData['id'] = doc.docs.first.id;
-    Bike foundBike = Bike.fromJson(bikeData);
-
-    setState(() {
-      isBikeCodeValid = true;
-      bike = foundBike;
-    });
-  } else {
-    setState(() {
-      isBikeCodeValid = false;
-      bike = null;
-    });
+    BikeRepository bikeRepository = BikeRepository();
+    List<Bike> availableBikes = await bikeRepository.getAvailableBikesForStation(widget.startStationId);
+  
+    try {
+      Bike foundBike = availableBikes.firstWhere((bike) => bike.number == bikeCode);
+      setState(() {
+        isBikeCodeValid = true;
+        bike = foundBike;
+      });
+    } catch (e) {
+      setState(() {
+        isBikeCodeValid = false;
+        bike = null;
+      });
+    }
   }
-}
 
 
   // Get the correct image based on the payment method
@@ -127,6 +127,12 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       return;
     }
 
+    debugPrint("debugPrint");
+    debugPrint(widget.startStationId);
+    debugPrint(widget.destinationStationId);
+    debugPrint(widget.destinationName);
+    debugPrint("debugPrint");
+
     if (!isBikeCodeValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -144,7 +150,9 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
         MaterialPageRoute(
           builder: (context) => Ride(
             startPoint: widget.startPoint,
+            startStationId: widget.startStationId,
             destinationPoint: widget.destinationPoint,
+            destinationStationId: widget.destinationStationId,
             destinationName: widget.destinationName,
             waypoints: waypoints,
             bike: bike!,
@@ -300,12 +308,12 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
               polylines: Set<Polyline>.of(_controller.polylines.values),
               markers: {
                 Marker(
-                  markerId: MarkerId('start'),
+                  markerId: MarkerId(widget.startStationId),
                   position: widget.startPoint,
                   infoWindow: InfoWindow(title: 'Start Point'),
                 ),
                 Marker(
-                  markerId: MarkerId('destination'),
+                  markerId: MarkerId(widget.destinationStationId),
                   position: widget.destinationPoint,
                   infoWindow: InfoWindow(title: 'Destination'),
                 ),

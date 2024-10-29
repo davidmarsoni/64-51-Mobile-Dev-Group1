@@ -7,6 +7,8 @@ import 'package:valais_roll/data/repository/station_repository.dart';
 class BikeRepository {
   final CollectionReference _bikesCollection = FirebaseFirestore.instance.collection('bikes');
 
+  // CRUD operations
+
   // Add a new bike
   Future<String> addBike(Bike bike) async {
     try {
@@ -69,36 +71,6 @@ class BikeRepository {
     }
   }
 
-  // Add bike reference to station
-  Future<void> addBikeRefToStation(String stationReference, String bikeId) async {
-    final stationRepository = StationRepository();
-    await stationRepository.addBikeRef(stationReference, bikeId);
-  }
-
-  // Delete bike reference from station
-  Future<void> removeBikeRefToStation(String stationReference, String bikeId) async {
-    final stationRepository = StationRepository();
-    await stationRepository.removeBikeRef(stationReference, bikeId);
-  }
-
-  //add station reference to bike
-  Future<void> addStationRefToBike(String bikeId, String stationId) async {
-    try {
-      await _bikesCollection.doc(bikeId).update({'stationReference': stationId});
-    } catch (e) {
-      print('Error adding station reference to bike: $e');
-    }
-  }
-
-  //remove station reference from bike
-  Future<void> removeStationRefFromBike(String bikeId) async {
-    try {
-      await _bikesCollection.doc(bikeId).update({'stationReference': ''});
-    } catch (e) {
-      print('Error removing station reference from bike: $e');
-    }
-  }
-
   // Get a bike by ID
   Future<Bike?> getBikeById(String id) async {
     try {
@@ -112,7 +84,7 @@ class BikeRepository {
     return null;
   }
 
-  // get a Bike by number
+  // Get a bike by number
   Future<Bike?> getBikeByNbr(String number) async {
     try {
       DocumentSnapshot doc = await _bikesCollection.doc(number).get();
@@ -140,31 +112,7 @@ class BikeRepository {
     }
   }
 
-  // Get only available bikes (operational)
-  Future<List<Bike>> getAvailableBikes() async {
-    try {
-      QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
-      return querySnapshot.docs.map((doc) {
-        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id; // Add the document ID to the data
-        return Bike.fromJson(data);
-      }).toList();
-    } catch (e) {
-      print('Error getting available bikes: $e');
-      return [];
-    }
-  }
-
-  // Count available bikes (operational)
-  Future<int> countAvailableBikes() async {
-    try {
-      QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
-      return querySnapshot.docs.length;
-    } catch (e) {
-      print('Error counting available bikes: $e');
-      return 0;
-    }
-  }
+  // Status-related operations
 
   // Set bike status to available
   Future<String> setBikeStatusAvailable(String id) async {
@@ -196,10 +144,69 @@ class BikeRepository {
     }
   }
 
+  // Station-related operations
+
+  // Add bike reference to station
+  Future<void> addBikeRefToStation(String stationReference, String bikeId) async {
+    final stationRepository = StationRepository();
+    await stationRepository.addBikeRef(stationReference, bikeId);
+  }
+
+  // Remove bike reference from station
+  Future<void> removeBikeRefToStation(String stationReference, String bikeId) async {
+    final stationRepository = StationRepository();
+    await stationRepository.removeBikeRef(stationReference, bikeId);
+  }
+
+  // Add station reference to bike
+  Future<void> addStationRefToBike(String bikeId, String stationId) async {
+    try {
+      await _bikesCollection.doc(bikeId).update({'stationReference': stationId});
+    } catch (e) {
+      print('Error adding station reference to bike: $e');
+    }
+  }
+
+  // Remove station reference from bike
+  Future<void> removeStationRefFromBike(String bikeId) async {
+    try {
+      await _bikesCollection.doc(bikeId).update({'stationReference': ''});
+    } catch (e) {
+      print('Error removing station reference from bike: $e');
+    }
+  }
+
+  // Query operations
+
+  // Get only available bikes (operational)
+  Future<List<Bike>> getAvailableBikes() async {
+    try {
+      QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
+      return querySnapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Add the document ID to the data
+        return Bike.fromJson(data);
+      }).toList();
+    } catch (e) {
+      print('Error getting available bikes: $e');
+      return [];
+    }
+  }
+
+  // Count available bikes (operational)
+  Future<int> countAvailableBikes() async {
+    try {
+      QuerySnapshot querySnapshot = await _bikesCollection.where('status', isEqualTo: 'operational').get();
+      return querySnapshot.docs.length;
+    } catch (e) {
+      print('Error counting available bikes: $e');
+      return 0;
+    }
+  }
+
   // Get bikes with no associated station, ordered by name
   Future<List<Bike>> getBikesWithNoStation() async {
     try {
-      // Query for bikes with stationReference as empty string and order by name
       QuerySnapshot querySnapshot = await _bikesCollection
           .where('stationReference', isEqualTo: '')
           .get();
@@ -214,5 +221,33 @@ class BikeRepository {
     }
   }
 
+  // Get available bikes for a station 
+  Future<List<Bike>> getAvailableBikesForStation(String stationId) async {
+    try {
+      QuerySnapshot querySnapshot = await _bikesCollection.where('stationReference', isEqualTo: stationId).get();
+      return querySnapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Add the document ID to the data
+        return Bike.fromJson(data);
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
 
+  // Check and return if a bike is available for use on a station with its number
+   Future<String?> isBikeAvailableForUse(String bikeNumber, String stationId) async {
+    try {
+      QuerySnapshot querySnapshot = await _bikesCollection
+          .where('number', isEqualTo: bikeNumber)
+          .where('stationReference', isEqualTo: stationId)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first.id;
+      }
+    } catch (e) {
+      print('Error checking bike availability: $e');
+    }
+    return null;
+  }
 }

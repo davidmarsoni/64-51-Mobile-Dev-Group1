@@ -14,7 +14,9 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore
 
 class Ride extends StatefulWidget {
   final LatLng startPoint;
+  final String startStationId;
   final LatLng destinationPoint;
+  final String destinationStationId;
   final String destinationName;
   final List<LatLng> waypoints; 
   final Bike bike;
@@ -22,10 +24,12 @@ class Ride extends StatefulWidget {
   const Ride({
     super.key,
     required this.startPoint,
+    required this.startStationId,
     required this.destinationPoint,
+    required this.destinationStationId,
     required this.destinationName,
     this.waypoints = const [],
-    required this.bike,
+    required this.bike, 
   });
 
   @override

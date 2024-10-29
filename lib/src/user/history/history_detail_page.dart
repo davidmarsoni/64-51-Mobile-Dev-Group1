@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:valais_roll/data/objects/history.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:valais_roll/data/repository/station_repository.dart';
 
 class HistoryDetailPage extends StatefulWidget {
   final History history;
@@ -27,11 +28,27 @@ class _HistoryDetailPageState extends State<HistoryDetailPage> {
   double price = 0.0;
   final double ratePerMinute = 0.5; // Define the rate per minute
 
+  String? startStationName;
+  String? endStationName;
+
   @override
   void initState() {
     super.initState();
+    _fetchStationNames();
     _getRouteWithWaypoints();
     _calculatePriceFromTime();
+  }
+
+  Future<void> _fetchStationNames() async {
+    StationRepository stationRepo = StationRepository();
+
+    var startStation = await stationRepo.getStationById(widget.history.startStationRef);
+    var endStation = await stationRepo.getStationById(widget.history.endStationRef!);
+
+    setState(() {
+      startStationName = startStation?.name;
+      endStationName = endStation?.name;
+    });
   }
 
   Future<void> _getRouteWithWaypoints() async {
@@ -108,29 +125,25 @@ class _HistoryDetailPageState extends State<HistoryDetailPage> {
 
   void _calculatePriceFromTime() {
     try {
-      // Assuming startTime and endTime are already DateTime objects
-      DateTime? startTime = widget.history.startTime as DateTime?;
-      DateTime? endTime = widget.history.endTime as DateTime?;
+      DateTime? startTime = widget.history.startTime;
+      DateTime? endTime = widget.history.endTime;
 
       if (startTime != null && endTime != null) {
-        // Calculate the duration in minutes
         usageDurationMinutes = endTime.difference(startTime).inMinutes;
-
-        // Calculate price based on duration
         price = usageDurationMinutes * ratePerMinute;
         if (price < 5) {
-          price = 5; 
+          price = 5;
         }
       } else {
         usageDurationMinutes = 0;
-        price = 5; 
+        price = 5;
       }
     } catch (e) {
       usageDurationMinutes = 0;
-      price = 5; // Default minimum charge if there's an error
+      price = 5;
     }
   }
- 
+
   @override
   Widget build(BuildContext context) {
     LatLng initialPosition = LatLng(
@@ -158,7 +171,6 @@ class _HistoryDetailPageState extends State<HistoryDetailPage> {
     };
 
     return BasePage(
-      title: 'Ride Details',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -169,6 +181,37 @@ class _HistoryDetailPageState extends State<HistoryDetailPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
+            // Display Start Station Name
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'From:',
+                  style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+                ),
+                Text(
+                  startStationName ?? 'Unknown',
+                  style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Display End Station Name
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'To:',
+                  style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+                ),
+                Text(
+                  endStationName ?? 'Unknown',
+                  style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Price
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -183,6 +226,7 @@ class _HistoryDetailPageState extends State<HistoryDetailPage> {
               ],
             ),
             const SizedBox(height: 8),
+            // Duration
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -197,6 +241,7 @@ class _HistoryDetailPageState extends State<HistoryDetailPage> {
               ],
             ),
             const SizedBox(height: 8),
+            // Distance
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -238,10 +283,14 @@ class _HistoryDetailPageState extends State<HistoryDetailPage> {
   }
 
   LatLngBounds _calculateBounds(List<LatLng> points) {
-    double southWestLat = points.map((p) => p.latitude).reduce((a, b) => a < b ? a : b);
-    double southWestLng = points.map((p) => p.longitude).reduce((a, b) => a < b ? a : b);
-    double northEastLat = points.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
-    double northEastLng = points.map((p) => p.longitude).reduce((a, b) => a > b ? a : b);
+    double southWestLat =
+        points.map((p) => p.latitude).reduce((a, b) => a < b ? a : b);
+    double southWestLng =
+        points.map((p) => p.longitude).reduce((a, b) => a < b ? a : b);
+    double northEastLat =
+        points.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
+    double northEastLng =
+        points.map((p) => p.longitude).reduce((a, b) => a > b ? a : b);
 
     return LatLngBounds(
       southwest: LatLng(southWestLat, southWestLng),

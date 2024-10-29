@@ -20,7 +20,9 @@ class _ItineraryPageState extends State<ItineraryPage> {
   final ItineraryController _itineraryController = ItineraryController();
 
   LatLng? _startLatLng;
+  String _startStationId = '';
   LatLng? _destinationLatLng;
+  String _destinationStationId = '';
   CameraPosition? _initialPosition;
   bool showButton = false;
   bool _isStartValid = false;
@@ -166,6 +168,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                           onTapParam: () => _onStationMarkerTapped(
                             marker.infoWindow.title!.split('|')[0],
                             marker.position,
+                            marker.markerId.value,
                           ),
                         );
                       }),
@@ -259,8 +262,10 @@ class _ItineraryPageState extends State<ItineraryPage> {
                       MaterialPageRoute(
                         builder: (context) => BicycleSelectionView(
                           startPoint: _startLatLng!,
+                          startStationId: _startStationId,
                           destinationPoint: _destinationLatLng!,
                           destinationName: _approvedDestinationStation ?? '',
+                          destinationStationId: _destinationStationId,
                         ),
                       ),
                     );
@@ -301,7 +306,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
   }
 
   // Handle when a station marker is tapped
-  void _onStationMarkerTapped(String stationName, LatLng stationPosition) {
+  void _onStationMarkerTapped(String stationName, LatLng stationPosition, String stationId) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -339,6 +344,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     } else {
                       setState(() {
                         _startLatLng = stationPosition;
+                        _startStationId = stationId;
                         _startController.text = stationName;
                         _approvedStartStation = stationName; 
 
@@ -363,9 +369,9 @@ class _ItineraryPageState extends State<ItineraryPage> {
                   onTap: () {
                     setState(() {
                       _destinationLatLng = stationPosition;
+                      _destinationStationId = stationId;
                       _destinationController.text = stationName;
-                      _approvedDestinationStation =
-                          stationName; // Approve the station
+                      _approvedDestinationStation = stationName; // Approve the station
 
                       // Hide the approval icon after 1 second
                       Timer(Duration(seconds: 1), () {
