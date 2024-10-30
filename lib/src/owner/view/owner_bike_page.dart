@@ -39,7 +39,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
   Future<void> _fetchStations() async {
     final stationsList = await _stationRepository.getAllStations();
     setState(() {
-      _stations = stationsList;
+      _stations = [Station(id: '', name: 'No station', bikeReferences: [], coordinates: GeoPoint(0, 0), address: '')] + stationsList;
     });
   }
 
@@ -146,6 +146,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
                                           setState(() {
                                             isViewMode = true;
                                             isEditMode = false;
+                                            _selectedBike = null; // Close history when another bike is selected
                                             _populateFormFields(bike);
                                           });
                                           controller.selectBike(bike);
@@ -168,6 +169,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
                                     setState(() {
                                       isViewMode = true;
                                       isEditMode = false;
+                                      _selectedBike = null; // Close history when another bike is selected
                                       _populateFormFields(bike);
                                     });
                                     controller.selectBike(bike);
@@ -280,7 +282,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
                                                           ),
                                                         ],
                                                       ),
-                                                      SizedBox(width: 16.0),
+                                                      SizedBox(width: 32.0), // Adjusted spacing to move the second column to the right
                                                       // Second column: Start and end station
                                                       Expanded(
                                                         child: Column(
@@ -358,7 +360,10 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
     _modelController.text = bike.model;
     _numberController.text = bike.number;
     _selectedStatus = bike.bike_state;
-    _selectedStation = _stations.firstWhere((station) => station.id == bike.stationReference, orElse: () => _stations.first);
+    _selectedStation = _stations.firstWhere(
+      (station) => station.id == bike.stationReference,
+      orElse: () => _stations.first,
+    );
   }
 
   void _clearFormFields() {
@@ -366,7 +371,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
     _modelController.clear();
     _numberController.clear();
     _selectedStatus = null;
-    _selectedStation = null;
+    _selectedStation = _stations.first;
   }
 
   InputDecoration _inputDecoration(String labelText) {

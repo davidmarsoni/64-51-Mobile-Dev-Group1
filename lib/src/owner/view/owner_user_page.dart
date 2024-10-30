@@ -252,7 +252,7 @@ class _OwnerUserPageState extends State<OwnerUserPage> {
                                                   icon: Icons.attach_money,
                                                   iconColor: Colors.black,
                                                   title: 'Cost:',
-                                                  content: '',
+                                                  content: '${_selectedHistory!.cost != null ? '\$${_selectedHistory!.cost!.toStringAsFixed(2)}' : 'N/A'}',
                                                 ),
                                               ),
                                             ],
