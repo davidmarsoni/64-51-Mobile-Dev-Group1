@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:valais_roll/data/objects/Station.dart';
 import 'package:valais_roll/data/objects/bike.dart';
+import 'package:valais_roll/data/objects/history.dart';
 import 'package:valais_roll/data/repository/bike_repository.dart';
 import 'package:valais_roll/data/repository/station_repository.dart';
+import 'package:valais_roll/data/repository/history_repository.dart';
 
 class OwnerBikesController extends ChangeNotifier {
   final BikeRepository _bikeRepository = BikeRepository();
   final StationRepository _stationRepository = StationRepository();
+  final HistoryRepository _historyRepository = HistoryRepository();
+  List<History> bikeHistory = [];
   List<Bike> _bikes = [];
   List<Station> _stations = [];
   Bike? _selectedBike;
@@ -79,4 +83,10 @@ class OwnerBikesController extends ChangeNotifier {
       debugPrint('Error deleting bike: $e');
     }
   }
+
+  Future<void> fetchBikeHistory(String bikeId) async {
+    bikeHistory = await _historyRepository.getHistoryByBike(bikeId);
+    notifyListeners();
+  }
 }
+  

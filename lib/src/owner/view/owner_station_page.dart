@@ -180,17 +180,33 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
                   flex: 2,
                   child: Consumer<OwnerStationsController>(
                     builder: (context, controller, child) {
-                      return Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildAddStationForm(context, controller),
-                              SizedBox(height: 20),
-                              if (isViewMode) _buildEditDeleteButtons(context, controller),
-                            ],
+                      return SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+                          child: IntrinsicHeight(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Align(
+                                alignment: Alignment.topLeft, // Align content to the top
+                                child: FocusTraversalGroup(
+                                  policy: WidgetOrderTraversalPolicy(),
+                                  child: FocusScope(
+                                    node: FocusScopeNode(),
+                                    child: Form(
+                                      key: _formKey,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          _buildAddStationForm(context, controller),
+                                          SizedBox(height: 20),
+                                          if (isViewMode) _buildEditDeleteButtons(context, controller),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       );
@@ -206,6 +222,7 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
   }
 
   void _populateFormFields(Station station) {
+    _formKey.currentState?.reset(); // Reset the form state to clear any error messages
     _nameController.text = station.name ?? '';
     _addressController.text = station.address ?? '';
     _latitudeController.text = station.coordinates?.latitude.toString() ?? '';

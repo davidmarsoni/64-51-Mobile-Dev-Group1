@@ -17,6 +17,7 @@ class OwnerBikePage extends StatefulWidget {
 class _OwnerBikePageState extends State<OwnerBikePage> {
   bool isViewMode = false;
   bool isEditMode = false;
+  Bike? _selectedBike;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -38,7 +39,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
   Future<void> _fetchStations() async {
     final stationsList = await _stationRepository.getAllStations();
     setState(() {
-      _stations = stationsList;
+      _stations = [Station(id: '', name: 'No station', bikeReferences: [], coordinates: GeoPoint(0, 0), address: '')] + stationsList;
     });
   }
 
@@ -136,21 +137,39 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
                                       Text(stationName!),
                                     ],
                                   ),
-                                  trailing: IconButton(
-                                    icon: Icon(Icons.arrow_forward),
-                                    onPressed: () {
-                                      setState(() {
-                                        isViewMode = true;
-                                        isEditMode = false;
-                                        _populateFormFields(bike);
-                                      });
-                                      controller.selectBike(bike);
-                                    },
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(Icons.arrow_forward),
+                                        onPressed: () {
+                                          setState(() {
+                                            isViewMode = true;
+                                            isEditMode = false;
+                                            _selectedBike = null; // Close history when another bike is selected
+                                            _populateFormFields(bike);
+                                          });
+                                          controller.selectBike(bike);
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.history),
+                                        onPressed: () async {
+                                          setState(() {
+                                            _selectedBike = bike;
+                                          });
+                                          if (bike.id != null) {
+                                            await Provider.of<OwnerBikesController>(context, listen: false).fetchBikeHistory(bike.id!);
+                                          }
+                                        },
+                                      ),
+                                    ],
                                   ),
                                   onTap: () {
                                     setState(() {
                                       isViewMode = true;
                                       isEditMode = false;
+                                      _selectedBike = null; // Close history when another bike is selected
                                       _populateFormFields(bike);
                                     });
                                     controller.selectBike(bike);
@@ -166,23 +185,166 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
                 ),
                 Expanded(
                   flex: 2,
-                  child: Consumer<OwnerBikesController>(
-                    builder: (context, controller, child) {
-                      return Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildAddBikeForm(context, controller),
-                              SizedBox(height: 20),
-                              if (isViewMode) _buildEditDeleteButtons(context, controller),
-                            ],
+                  child: Stack(
+                    children: [
+                      Consumer<OwnerBikesController>(
+                        builder: (context, controller, child) {
+                          return SingleChildScrollView(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+                              child: IntrinsicHeight(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Align(
+                                    alignment: Alignment.topLeft, // Align content to the top
+                                    child: Form(
+                                      key: _formKey,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          _buildAddBikeForm(context, controller),
+                                          SizedBox(height: 20),
+                                          if (isViewMode) _buildEditDeleteButtons(context, controller),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      if (_selectedBike != null)
+                        Positioned.fill(
+                          child: Container(
+                            color: Colors.black54,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15.0),
+                                ),
+                                elevation: 10,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text('Bike History - ${_selectedBike!.name}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                          Spacer(),
+                                          IconButton(
+                                            icon: Icon(Icons.close),
+                                            onPressed: () {
+                                              setState(() {
+                                                _selectedBike = null;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(),
+                                      SizedBox(height: 10),
+                                      Consumer<OwnerBikesController>(
+                                        builder: (context, controller, child) {
+                                          if (controller.bikeHistory.isEmpty) {
+                                            return Text('No history available');
+                                          } else {
+                                            return ListView.builder(
+                                              shrinkWrap: true,
+                                              itemCount: controller.bikeHistory.length,
+                                              itemBuilder: (context, index) {
+                                                final historyItem = controller.bikeHistory[index];
+                                                return Padding(
+                                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                  child: Row(
+                                                    children: [
+                                                      // First column: User icon and name
+                                                      Column(
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              Icon(
+                                                                Icons.person,
+                                                                size: 48.0, // Adjust the size to match the height of 2 lines
+                                                              ),
+                                                              SizedBox(width: 8.0),
+                                                              Column(
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text('User'),
+                                                                  Text('${historyItem.userName ?? historyItem.userRef}'),
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(width: 32.0), // Adjusted spacing to move the second column to the right
+                                                      // Second column: Start and end station
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Row(
+                                                              children: [
+                                                                Icon(Icons.location_on, color: Colors.red, size: 16.0),
+                                                                SizedBox(width: 4.0),
+                                                                Text('Start: ${historyItem.startStationName ?? historyItem.startStationRef}'),
+                                                              ],
+                                                            ),
+                                                            Row(
+                                                              children: [
+                                                                Icon(Icons.flag, color: Colors.green, size: 16.0),
+                                                                SizedBox(width: 4.0),
+                                                                Text('End: ${historyItem.endStationName ?? historyItem.endStationRef ?? 'In Progress'}'),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 16.0),
+                                                      // Third column: Start and end time
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Row(
+                                                              children: [
+                                                                Icon(Icons.access_time, size: 16.0),
+                                                                SizedBox(width: 4.0),
+                                                                Text('Start Time: ${historyItem.startTime}'),
+                                                              ],
+                                                            ),
+                                                            if (historyItem.endTime != null)
+                                                              Row(
+                                                                children: [
+                                                                  Icon(Icons.access_time, size: 16.0),
+                                                                  SizedBox(width: 4.0),
+                                                                  Text('End Time: ${historyItem.endTime}'),
+                                                                ],
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      );
-                    },
+                    ],
                   ),
                 ),
               ],
@@ -198,7 +360,10 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
     _modelController.text = bike.model;
     _numberController.text = bike.number;
     _selectedStatus = bike.bike_state;
-    _selectedStation = _stations.firstWhere((station) => station.id == bike.stationReference, orElse: () => _stations.first);
+    _selectedStation = _stations.firstWhere(
+      (station) => station.id == bike.stationReference,
+      orElse: () => _stations.first,
+    );
   }
 
   void _clearFormFields() {
@@ -206,7 +371,7 @@ class _OwnerBikePageState extends State<OwnerBikePage> {
     _modelController.clear();
     _numberController.clear();
     _selectedStatus = null;
-    _selectedStation = null;
+    _selectedStation = _stations.first;
   }
 
   InputDecoration _inputDecoration(String labelText) {

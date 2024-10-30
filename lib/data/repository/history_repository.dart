@@ -7,6 +7,7 @@ import 'package:valais_roll/data/repository/station_repository.dart';
 
 class HistoryRepository {
   final CollectionReference _historyCollection = FirebaseFirestore.instance.collection('history');
+  final CollectionReference _userCollection = FirebaseFirestore.instance.collection('users');
   final CollectionReference _bikeCollection = FirebaseFirestore.instance.collection('bikes');
   final StationRepository _stationRepository = StationRepository();
 
@@ -108,23 +109,44 @@ class HistoryRepository {
     }
   }
 
-  Future<List<History>> getHistoryByBike(String bikeRef) async {
+ Future<List<History>> getHistoryByBike(String bikeRef) async {
     try {
       QuerySnapshot querySnapshot = await _historyCollection.where('bikeRef', isEqualTo: bikeRef).get();
-      List<History> histories = querySnapshot.docs.map((doc) {
+      List<History> histories = await Future.wait(querySnapshot.docs.map((doc) async {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         History history = History.fromJson(data);
+
+        // Fetch related user name
+        DocumentSnapshot userDoc = await _userCollection.doc(history.userRef).get();
+        if (userDoc.exists) {
+          history.userName = userDoc['name'];
+        }
+
+        // Fetch related start station name
+        Station? startStation = await _stationRepository.getStationById(history.startStationRef);
+        if (startStation != null) {
+          history.startStationName = startStation.name;
+        }
+
+        // Fetch related end station name
+        if (history.endStationRef != null) {
+          Station? endStation = await _stationRepository.getStationById(history.endStationRef!);
+          if (endStation != null) {
+            history.endStationName = endStation.name;
+          }
+        }
+
         debugPrint('History fetched for bike: $bikeRef, History ID: ${history.id}');
         return history;
-      }).toList();
+      }).toList());
+
       return histories;
     } catch (e) {
       debugPrint('Error fetching history by bike: $e');
       return [];
     }
   }
-
   Future<String?> getLastHistory(String userRef) async {
     try {
       // First, check for histories where endTime is null
