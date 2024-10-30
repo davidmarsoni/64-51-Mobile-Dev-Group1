@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/data/repository/bike_repository.dart';
+import 'package:valais_roll/data/repository_manager.dart/trip_repository_manager.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/user/new_ride/view/ride.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
@@ -41,6 +43,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
   String enteredBikeCode = ''; // Store entered bike code
   bool isBikeCodeValid = false; // Track bike code validity
   Bike? bike;
+  List<String> _availableBikeCodes = [];
 
   @override
   void initState() {
@@ -53,6 +56,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
 
     _fetchRouteInfo(); // Fetch route and polyline on init
     _fetchPaymentMethod(); // Fetch payment method on init
+    _loadAvailableBikes(); // Add this line
   }
 
   // Fetch the route information and polyline
@@ -94,6 +98,14 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     }
   }
 
+  // Add this method to load available bikes:
+  Future<void> _loadAvailableBikes() async {
+    BikeRepository bikeRepository = BikeRepository();
+    List<Bike> bikes = await bikeRepository.getAvailableBikesForStation(widget.startStationId);
+    setState(() {
+      _availableBikeCodes = bikes.map((bike) => bike.number).toList();
+    });
+  }
 
   // Get the correct image based on the payment method
   Image? _getPaymentImage() {
@@ -127,16 +139,43 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       return;
     }
 
-    debugPrint("debugPrint");
-    debugPrint(widget.startStationId);
-    debugPrint(widget.destinationStationId);
-    debugPrint(widget.destinationName);
-    debugPrint("debugPrint");
-
+    //verify the bike code
     if (!isBikeCodeValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Invalid bike code. Please enter a valid bike code.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    TripRepositoryManager tripRepositoryManager = TripRepositoryManager();
+
+    //start the bicycle trip
+
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      String userRef = currentUser.uid;
+      String bikeRef = bike!.id!;
+      tripRepositoryManager.startTrip(userRef, bikeRef, widget.startStationId).then((_) {
+        //add the interest point if it exists to the trip
+        debugPrint('AAA :waypoints: $waypoints');
+        debugPrint('AAA :waypoints.first: ${waypoints.isNotEmpty}');
+        if (waypoints.isNotEmpty) {
+          debugPrint('AAA : addInterestPoint');
+          tripRepositoryManager.addInterestPoint(
+            currentUser!.uid,
+            GeoPoint(waypoints.first.latitude, waypoints.first.longitude),
+          );
+        }
+      }).catchError((error) {
+        debugPrint('Error starting trip: $error');
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('User not logged in. Please log in to start a trip.'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -235,17 +274,37 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                     ),
                   ],
                 ),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: "Enter the bike code or take a photo of the QR code",
-                    suffixIcon: Icon(Icons.camera_alt),
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      enteredBikeCode = value;
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') {
+                      return const Iterable<String>.empty();
+                    }
+                    return _availableBikeCodes.where((String option) {
+                      return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                     });
-                    _checkBikeCode(enteredBikeCode); // Validate bike code on change
+                  },
+                  onSelected: (String selection) {
+                    setState(() {
+                      enteredBikeCode = selection;
+                    });
+                    _checkBikeCode(selection);
+                  },
+                  fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        labelText: "Enter the bike code or take a photo of the QR code",
+                        suffixIcon: Icon(Icons.camera_alt),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          enteredBikeCode = value;
+                        });
+                        _checkBikeCode(value);
+                      },
+                    );
                   },
                 ),
                 SizedBox(height: 10),

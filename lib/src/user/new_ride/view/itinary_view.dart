@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:valais_roll/data/repository_manager.dart/trip_repository_manager.dart';
 import 'package:valais_roll/src/user/new_ride/controller/itinary_controller.dart';
 import 'package:valais_roll/src/user/new_ride/view/bicycle_selection_view.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
@@ -251,7 +253,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                 onPressed: () async {
                   if (_startLatLng != null && _destinationLatLng != null) {
                     // Check station capacity again before navigating
-                    bool capacity = await _itineraryController.capacity(_startController.text); 
+                    bool capacity = await _itineraryController.capacity(_startStationId);
                     if (!capacity) {
                       _showErrorMessage("This start station has no available bicycles, please choose another start station.");
                       return;
@@ -310,83 +312,83 @@ class _ItineraryPageState extends State<ItineraryPage> {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  title: Text('Start your journey to this station'),
-                  subtitle: Text('Station: $stationName'),
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/itinaryStation',
-                      arguments: {
-                        'stationName': stationName,           
-                        'stationPosition': stationPosition,  
-                      },
-                    );
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text('Start your journey to this station'),
+              subtitle: Text('Station: $stationName'),
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/itinaryStation',
+                  arguments: {
+                    'stationName': stationName,
+                    'stationPosition': stationPosition,
                   },
-                ),
-                ListTile(
-                  title: Text('Select as Start Station'),
-                  subtitle: Text('Station: $stationName'),
-                  trailing: _approvedStartStation == stationName
-                      ? Icon(Icons.check_circle, color: Colors.green)
-                      : null,
-                  onTap: () async {
-                    bool startCapacity = await _itineraryController.capacity(stationName);
-                    
-                    if (!startCapacity) {
-                      Navigator.pop(context);
-                      _showErrorMessage("This start station has no available bicycles, please choose another station.");
-                    } else {
+                );
+              },
+            ),
+            ListTile(
+              title: Text('Select as Start Station'),
+              subtitle: Text('Station: $stationName'),
+              trailing: _approvedStartStation == stationName
+                  ? Icon(Icons.check_circle, color: Colors.green)
+                  : null,
+              onTap: () async {
+                bool startCapacity = await _itineraryController.capacity(stationId);   
+                if (!startCapacity) {
+                  Navigator.pop(context);
+                  _showErrorMessage(
+                      "$stationName has no available bicycles, please choose another station.");
+                } else {
+                  setState(() {
+                    _startLatLng = stationPosition;
+                    _startStationId = stationId;
+                    _startController.text = stationName;
+                    _approvedStartStation = stationName;
+                  });
+                  Navigator.pop(context);
+
+                  // Hide the approval icon after 1 second
+                  Timer(Duration(seconds: 1), () {
+                    if (mounted) {
                       setState(() {
-                        _startLatLng = stationPosition;
-                        _startStationId = stationId;
-                        _startController.text = stationName;
-                        _approvedStartStation = stationName; 
-
-                        // Hide the approval icon after 1 second
-                        Timer(Duration(seconds: 1), () {
-                          setState(() {
-                            _approvedStartStation = null;
-                          });
-                        });
-                        Navigator.pop(context);
+                        _approvedStartStation = null;
                       });
-                      _checkIfBothLocationsAreStations();
                     }
-                  },
-                ),
-                ListTile(
-                  title: Text('Select as Destination Station'),
-                  subtitle: Text('Station: $stationName'),
-                  trailing: _approvedDestinationStation == stationName
-                      ? Icon(Icons.check_circle, color: Colors.green)
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _destinationLatLng = stationPosition;
-                      _destinationStationId = stationId;
-                      _destinationController.text = stationName;
-                      _approvedDestinationStation = stationName; // Approve the station
+                  });
+                  _checkIfBothLocationsAreStations();
+                }
+              },
+            ),
+            ListTile(
+              title: Text('Select as Destination Station'),
+              subtitle: Text('Station: $stationName'),
+              trailing: _approvedDestinationStation == stationName
+                  ? Icon(Icons.check_circle, color: Colors.green)
+                  : null,
+              onTap: () {
+                setState(() {
+                  _destinationLatLng = stationPosition;
+                  _destinationStationId = stationId;
+                  _destinationController.text = stationName;
+                  _approvedDestinationStation = stationName;
+                });
+                Navigator.pop(context);
 
-                      // Hide the approval icon after 1 second
-                      Timer(Duration(seconds: 1), () {
-                        setState(() {
-                          _approvedDestinationStation = null;
-                        });
-                      });
-                      Navigator.pop(context);
+                // Hide the approval icon after 1 second
+                Timer(Duration(seconds: 1), () {
+                  if (mounted) {
+                    setState(() {
+                      _approvedDestinationStation = null;
                     });
-                    _checkIfBothLocationsAreStations();
-                  },
-                ),
-              ],
-            );
-          },
+                  }
+                });
+                _checkIfBothLocationsAreStations();
+              },
+            ),
+          ],
         );
       },
     );

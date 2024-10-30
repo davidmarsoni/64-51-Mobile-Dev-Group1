@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as loc;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -161,27 +162,18 @@ class ItineraryController {
     }
   }
 
-  Future<bool> capacity(String stationName) async {
+    Future<bool> capacity(String stationId) async {
     try {
-      print(stationName);
-      // Query Firestore for the station document with the given name
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('stations')
-          .where('Name', isEqualTo: stationName.trim())
-          .get();
+      debugPrint("Checking capacity for station $stationId");
 
-      // Check if any station was found
-      if (snapshot.docs.isEmpty) {
-        print("No station found with the name $stationName");
-        return false;
-      }
-
-      // Extract the number of bicycles from the station's document
-      DocumentSnapshot stationDoc = snapshot.docs.first;
-      int nbrBicycles = stationDoc['NbrBicycle'];
-
-      // Return true if there are more than 0 bicycles, false otherwise
-      return nbrBicycles > 0;
+      // Create an instance of StationRepository
+      StationRepository stationRepo = StationRepository();
+  
+      // Get the number of available bikes
+      int availableBikes = await stationRepo.countAvailableBikes(stationId);
+      debugPrint("Checking capacity for station $stationId: $availableBikes available bikes");
+      // Return true if there are more than 0 available bikes
+      return availableBikes > 0;
     } catch (e) {
       print("Error checking capacity: $e");
       return false;
