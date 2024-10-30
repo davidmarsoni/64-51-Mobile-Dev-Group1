@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:valais_roll/data/objects/history.dart';
 import 'package:valais_roll/data/objects/Station.dart';
-import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/data/repository/station_repository.dart';
 
 class HistoryRepository {

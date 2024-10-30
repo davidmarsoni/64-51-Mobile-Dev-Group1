@@ -1,5 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:valais_roll/data/objects/bike.dart';
+import 'package:valais_roll/data/repository/bike_repository.dart';
+import 'package:valais_roll/data/repository_manager.dart/trip_repository_manager.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/user/new_ride/view/ride.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
@@ -9,11 +13,18 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Firebase Firestore imp
 
 class BicycleSelectionView extends StatefulWidget {
   final LatLng startPoint;
+  final String startStationId;
   final LatLng destinationPoint;
+  final String destinationStationId;
   final String destinationName;
 
   const BicycleSelectionView(
-      {super.key, required this.startPoint, required this.destinationPoint, required this.destinationName});
+      {super.key, 
+      required this.startPoint, 
+      required this.startStationId,
+      required this.destinationPoint, 
+      required this.destinationStationId,
+      required this.destinationName});
 
   @override
   _BicycleSelectionViewState createState() => _BicycleSelectionViewState();
@@ -31,6 +42,8 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
   String? duration; // Store estimated time
   String enteredBikeCode = ''; // Store entered bike code
   bool isBikeCodeValid = false; // Track bike code validity
+  Bike? bike;
+  List<String> _availableBikeCodes = [];
 
   @override
   void initState() {
@@ -43,6 +56,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
 
     _fetchRouteInfo(); // Fetch route and polyline on init
     _fetchPaymentMethod(); // Fetch payment method on init
+    _loadAvailableBikes(); // Add this line
   }
 
   // Fetch the route information and polyline
@@ -66,16 +80,30 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
     });
   }
 
-  // Check if the bike code exists in Firebase Firestore
   Future<void> _checkBikeCode(String bikeCode) async {
-    final firestoreInstance = FirebaseFirestore.instance;
-    final doc = await firestoreInstance
-        .collection('bikes')
-        .where('number', isEqualTo: bikeCode) // Assuming 'number' is the field for bike code
-        .get();
+    BikeRepository bikeRepository = BikeRepository();
+    List<Bike> availableBikes = await bikeRepository.getAvailableBikesForStation(widget.startStationId);
+  
+    try {
+      Bike foundBike = availableBikes.firstWhere((bike) => bike.number == bikeCode);
+      setState(() {
+        isBikeCodeValid = true;
+        bike = foundBike;
+      });
+    } catch (e) {
+      setState(() {
+        isBikeCodeValid = false;
+        bike = null;
+      });
+    }
+  }
 
+  // Add this method to load available bikes:
+  Future<void> _loadAvailableBikes() async {
+    BikeRepository bikeRepository = BikeRepository();
+    List<Bike> bikes = await bikeRepository.getAvailableBikesForStation(widget.startStationId);
     setState(() {
-      isBikeCodeValid = doc.docs.isNotEmpty;
+      _availableBikeCodes = bikes.map((bike) => bike.number).toList();
     });
   }
 
@@ -111,6 +139,7 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       return;
     }
 
+    //verify the bike code
     if (!isBikeCodeValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -121,18 +150,62 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       return;
     }
 
-    // Start the ride
-     Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Ride(
-          startPoint: widget.startPoint,
-          destinationPoint: widget.destinationPoint,
-          destinationName: widget.destinationName,
-          waypoints: waypoints, // Pass the waypoints if there are any
+    TripRepositoryManager tripRepositoryManager = TripRepositoryManager();
+
+    //start the bicycle trip
+
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      String userRef = currentUser.uid;
+      String bikeRef = bike!.id!;
+      tripRepositoryManager.startTrip(userRef, bikeRef, widget.startStationId).then((_) {
+        //add the interest point if it exists to the trip
+        debugPrint('AAA :waypoints: $waypoints');
+        debugPrint('AAA :waypoints.first: ${waypoints.isNotEmpty}');
+        if (waypoints.isNotEmpty) {
+          debugPrint('AAA : addInterestPoint');
+          tripRepositoryManager.addInterestPoint(
+            currentUser!.uid,
+            GeoPoint(waypoints.first.latitude, waypoints.first.longitude),
+          );
+        }
+      }).catchError((error) {
+        debugPrint('Error starting trip: $error');
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('User not logged in. Please log in to start a trip.'),
+          duration: Duration(seconds: 3),
         ),
-      ),
-    );
+      );
+      return;
+    }
+
+    // Start the ride
+    if (bike != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Ride(
+            startPoint: widget.startPoint,
+            startStationId: widget.startStationId,
+            destinationPoint: widget.destinationPoint,
+            destinationStationId: widget.destinationStationId,
+            destinationName: widget.destinationName,
+            waypoints: waypoints,
+            bike: bike!,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No bike selected. Please enter a valid bike code.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   // Handle map tap to add a waypoint and recalculate route
@@ -201,17 +274,37 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
                     ),
                   ],
                 ),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: "Enter the bike code or take a photo of the QR code",
-                    suffixIcon: Icon(Icons.camera_alt),
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      enteredBikeCode = value;
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') {
+                      return const Iterable<String>.empty();
+                    }
+                    return _availableBikeCodes.where((String option) {
+                      return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                     });
-                    _checkBikeCode(enteredBikeCode); // Validate bike code on change
+                  },
+                  onSelected: (String selection) {
+                    setState(() {
+                      enteredBikeCode = selection;
+                    });
+                    _checkBikeCode(selection);
+                  },
+                  fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        labelText: "Enter the bike code or take a photo of the QR code",
+                        suffixIcon: Icon(Icons.camera_alt),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          enteredBikeCode = value;
+                        });
+                        _checkBikeCode(value);
+                      },
+                    );
                   },
                 ),
                 SizedBox(height: 10),
@@ -274,12 +367,12 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
               polylines: Set<Polyline>.of(_controller.polylines.values),
               markers: {
                 Marker(
-                  markerId: MarkerId('start'),
+                  markerId: MarkerId(widget.startStationId),
                   position: widget.startPoint,
                   infoWindow: InfoWindow(title: 'Start Point'),
                 ),
                 Marker(
-                  markerId: MarkerId('destination'),
+                  markerId: MarkerId(widget.destinationStationId),
                   position: widget.destinationPoint,
                   infoWindow: InfoWindow(title: 'Destination'),
                 ),

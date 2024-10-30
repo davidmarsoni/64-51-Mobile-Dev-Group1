@@ -4,25 +4,35 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:valais_roll/data/objects/Station.dart';
+import 'package:valais_roll/data/objects/bike.dart';
+import 'package:valais_roll/data/repository/station_repository.dart';
+import 'package:valais_roll/data/repository_manager.dart/trip_repository_manager.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 import 'package:valais_roll/src/user/new_ride/view/billinfo.dart';
 import 'package:valais_roll/src/user/new_ride/view/payment.dart';
-import 'package:valais_roll/src/widgets/button.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore
 
 class Ride extends StatefulWidget {
   final LatLng startPoint;
+  final String startStationId;
   final LatLng destinationPoint;
+  final String destinationStationId;
   final String destinationName;
   final List<LatLng> waypoints; 
+  final Bike bike;
+  String nearestStationId = ''; // Store the nearest station ID
 
-  const Ride({
+  Ride({
     super.key,
     required this.startPoint,
+    required this.startStationId,
     required this.destinationPoint,
+    required this.destinationStationId,
     required this.destinationName,
-    this.waypoints = const [],
+    required this.waypoints,
+    required this.bike, 
   });
 
   @override
@@ -30,7 +40,7 @@ class Ride extends StatefulWidget {
 }
 
 class _RideState extends State<Ride> {
-  late GoogleMapController _mapController;
+  GoogleMapController? _mapController; // Make nullable
   late BicycleSelectionController _controller;
   StreamSubscription<Position>? _positionStreamSubscription;
 
@@ -60,7 +70,8 @@ class _RideState extends State<Ride> {
 
   @override
   void dispose() {
-    _positionStreamSubscription?.cancel(); // Cancel location updates when disposed
+    _positionStreamSubscription?.cancel();
+    _mapController?.dispose();
     super.dispose();
   }
 
@@ -70,19 +81,23 @@ class _RideState extends State<Ride> {
       desiredAccuracy: LocationAccuracy.high,
     );
 
+    if (!mounted) return;
+
     setState(() {
       _currentPosition = LatLng(position.latitude, position.longitude);
       _userPositions.add(_currentPosition!); // Store the first location
     });
 
     // Center the map on the user's current location
-    _mapController.animateCamera(
+    _mapController?.animateCamera(
       CameraUpdate.newLatLngZoom(_currentPosition!, 14),
     );
   }
 
 void _startPositionStream() {
     _positionStreamSubscription = Geolocator.getPositionStream().listen((Position position) {
+      if (!mounted) return;
+      
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
         _userPositions.add(_currentPosition!);
@@ -118,8 +133,9 @@ bool _hasArrivedAtDestination() {
 
 Future<void> _endRideAtNearestStation() async {
     await _findNearestStation();
+    if (!mounted) return;
  
-    if (_nearestStation != null && _currentPosition != null) {
+    if (_nearestStation != null && _currentPosition != null && _mapController != null) {
       _controller = BicycleSelectionController(
         startPoint: _currentPosition!,
         destinationPoint: _nearestStation!,
@@ -128,6 +144,8 @@ Future<void> _endRideAtNearestStation() async {
  
       await _controller.getRouteInfo([]);
       await _controller.getPolylineWithWaypoints([]);
+      
+      if (!mounted) return;
  
       setState(() {
         _polylines = Set<Polyline>.of(_controller.polylines.values);
@@ -147,7 +165,9 @@ Future<void> _endRideAtNearestStation() async {
         _rideFinished = false;
       });
  
-      _updateDistanceAndDuration();
+      await _updateDistanceAndDuration();
+      
+      if (!mounted) return;
  
       LatLngBounds bounds = LatLngBounds(
         southwest: LatLng(
@@ -159,32 +179,61 @@ Future<void> _endRideAtNearestStation() async {
           max(_currentPosition!.longitude, _nearestStation!.longitude),
         ),
       );
-      _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+      _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
     } else {
       _showErrorMessage("Unable to find the nearest station or get current position.");
     }
   }
 void _showArrivalInfo() {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: Text("You have arrived!"),
-        content: Text("You have reached your destination. Your ride has ended."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _getPaymentMethod(); 
-              Navigator.of(context).pop(); 
-              // open bill info page
-              _navigateToBillInfo();
-            },
-            child: Text("OK"),
-          ),
-        ],
-      );
-    },
-  );
+  // Terminate the current ride
+  TripRepositoryManager tripRepositoryManager = TripRepositoryManager();
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    _showErrorMessage('User not logged in');
+    return;
+  }
+
+  if (widget.bike.id == null) {
+    _showErrorMessage('Bike ID is null');
+    return;
+  }
+
+  // Use nearest station ID if available, otherwise use destination station ID
+  String finalStationId = widget.nearestStationId.isNotEmpty 
+      ? widget.nearestStationId 
+      : widget.destinationStationId;
+
+  tripRepositoryManager.endTrip(
+    user.uid, 
+    widget.bike.id!, 
+    finalStationId
+  ).then((_) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("You have arrived!"),
+          content: Text("You have reached your destination. Your ride has ended."),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await _getPaymentMethod();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  _navigateToBillInfo();
+                }
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }).catchError((error) {
+    _showErrorMessage('Error ending trip: $error');
+  });
 }
 
   void _finishRide() {
@@ -227,7 +276,7 @@ void _showArrivalInfo() {
 
 
   Future<void> _updateDistanceAndDuration() async {
-    if (_currentPosition == null) return;
+    if (_currentPosition == null || !mounted) return;
  
     LatLng destination = _isRidingToNearestStation ? _nearestStation! : widget.destinationPoint;
  
@@ -238,6 +287,8 @@ void _showArrivalInfo() {
     );
  
     await _controller.getRouteInfo([]);
+    if (!mounted) return;
+    
     setState(() {
       distance = double.tryParse(_controller.totalDistance.replaceAll(' km', ''));
       duration = _controller.estimatedTime;
@@ -278,14 +329,17 @@ void _showArrivalInfo() {
     });
   }
 
+  // Update onMapCreated to handle null safety
   void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
+    setState(() {
+      _mapController = controller;
+    });
   }
 
   // Recenter the map on the user's current location
   void _recenterCamera() {
-    if (_currentPosition != null) {
-      _mapController.animateCamera(
+    if (_currentPosition != null && _mapController != null) {
+      _mapController!.animateCamera(
         CameraUpdate.newLatLngZoom(_currentPosition!, 14),
       );
     }
@@ -293,42 +347,57 @@ void _showArrivalInfo() {
 
   // Function to find the nearest station
 Future<void> _findNearestStation() async {
-  if (_currentPosition == null) return;
+  if (_currentPosition == null || !mounted) return;
 
-  final stations = await FirebaseFirestore.instance.collection('stations').get();
-  double shortestDistance = double.infinity;
+  try {
+    StationRepository stationRepo = StationRepository();
+    List<Station> stations = await stationRepo.getAllStations();
+    
+    if (!mounted) return;
 
-  LatLng? nearestStation;
-
-  // Print number of stations found for debugging
-  print('Number of stations found: ${stations.docs.length}');
-
-  for (var station in stations.docs) {
-    GeoPoint geoPoint = station['Geopoint'];
-    LatLng stationPosition = LatLng(geoPoint.latitude, geoPoint.longitude);
-
-    // Calculate the distance between current position and this station
-    double distanceToStation = Geolocator.distanceBetween(
-      _currentPosition!.latitude,
-      _currentPosition!.longitude,
-      stationPosition.latitude,
-      stationPosition.longitude,
-    );
-
-    // Find the nearest station
-    if (distanceToStation < shortestDistance) {
-      shortestDistance = distanceToStation;
-      nearestStation = stationPosition; // Set the nearest station
+    if (stations.isEmpty) {
+      _showErrorMessage("No stations found");
+      return;
     }
-  }
 
-  // Check if we found a nearest station and update _nearestStation
-  if (nearestStation != null) {
-    setState(() {
-      _nearestStation = nearestStation; // Update _nearestStation with the found nearest station
-    });
-  } else {
-    _showErrorMessage("No stations found.");
+    print('Number of stations found: ${stations.length}');
+
+    double shortestDistance = double.infinity;
+    LatLng? nearestStationPosition;
+    String? nearestStationId;
+
+    for (var station in stations) {
+      if (station.coordinates == null) continue;
+
+      LatLng stationPosition = LatLng(
+        station.coordinates!.latitude,
+        station.coordinates!.longitude
+      );
+
+      double distanceToStation = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        stationPosition.latitude,
+        stationPosition.longitude,
+      );
+
+      if (distanceToStation < shortestDistance) {
+        shortestDistance = distanceToStation;
+        nearestStationPosition = stationPosition;
+        nearestStationId = station.id;
+      }
+    }
+
+    if (nearestStationPosition != null && mounted) {
+      setState(() {
+        _nearestStation = nearestStationPosition;
+        nearestStationId = nearestStationId;
+      });
+    } else {
+      _showErrorMessage("No stations found.");
+    }
+  } catch (e) {
+    _showErrorMessage("Error finding nearest station: $e");
   }
 }
 
@@ -378,11 +447,13 @@ void _navigateToBillInfo() {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => BillInfo(userRoute: _userPositions), // Pass user route
+      builder: (context) => BillInfo(
+        userRoute: _userPositions,
+        bike: widget.bike, // Pass the bike with its ID
+      ),
     ),
   );
 }
-
 
   // Helper function to create LatLngBounds from a list of LatLngs
   LatLngBounds _createBoundsFromPositions(List<LatLng> positions) {

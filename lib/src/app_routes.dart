@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:valais_roll/src/owner/view/owner_dashboard_page.dart';
 import 'package:valais_roll/src/owner/view/owner_login_page.dart';
 import 'package:valais_roll/src/owner/view/owner_user_page.dart';
+import 'package:valais_roll/src/user/history/history_view.dart';
 import 'package:valais_roll/src/user/new_ride/view/itinary_station_view.dart';
 import 'package:valais_roll/src/owner/view/owner_bike_page.dart';
 import 'package:valais_roll/src/owner/view/owner_station_page.dart';
@@ -37,6 +38,7 @@ class AppRoutes {
       '/home': (context) => const ItineraryPage(),
       '/itinerary': (context) => const ItineraryPage(),
       '/emergency_support': (context) => const EmergencySupportPage(),
+      '/history': (context) => HistoryListPage(),
       '/privacy_policy': (context) => const PrivacyPolicyPage(),
       '/paymentApp': (context) => const PaymentMethodPage(),
       '/itinaryStation': (context) {
