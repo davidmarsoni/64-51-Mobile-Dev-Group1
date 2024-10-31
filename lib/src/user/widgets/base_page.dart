@@ -9,6 +9,7 @@ class BasePage extends StatelessWidget {
   final VoidCallback? onBackButtonPressed;
   final bool showConfirmationDialog;
   final String confirmationDialogText;
+  final bool enableBackButton; 
 
   const BasePage({
     this.title = 'ValaisRoll',
@@ -17,6 +18,7 @@ class BasePage extends StatelessWidget {
     this.onBackButtonPressed,
     this.showConfirmationDialog = false,
     this.confirmationDialogText = 'Do you really want to leave this page? Any unsaved changes will be lost.',
+    this.enableBackButton = true,
     super.key,
   });
 
@@ -28,6 +30,7 @@ class BasePage extends StatelessWidget {
         onBackButtonPressed: onBackButtonPressed,
         showConfirmationDialog: showConfirmationDialog,
         confirmationDialogText: confirmationDialogText,
+        enableBackButton: enableBackButton, 
       ),
       body: body,
       bottomNavigationBar: BottomNavBar(

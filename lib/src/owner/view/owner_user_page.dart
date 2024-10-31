@@ -13,7 +13,6 @@ class OwnerUserPage extends StatefulWidget {
 }
 
 class _OwnerUserPageState extends State<OwnerUserPage> {
-  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _emailController = TextEditingController();

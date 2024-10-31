@@ -57,24 +57,16 @@ class TripRepositoryManager {
   }
 
   Future<String> addInterestPoint(String userRef, GeoPoint interestPoint) async {
-    debugPrint('AAA :addInterestPoint, userRef: $userRef, interestPoint: $interestPoint');
     try {
       // Get the last history for the user
       String? historyId = await _historyRepository.getLastHistory(userRef);
-      debugPrint('historyId: $historyId');
       if (historyId == null) {
-        debugPrint('No active trip found for the user');
         return 'No active trip found for the user';
       }
-
       // Add interest point to history
-      debugPrint('addInterestPoint');
       await _historyRepository.addInterestPoint(historyId, interestPoint);
-      debugPrint('Interest point added successfully');
-
       return 'Interest point added successfully';
     } catch (e) {
-      debugPrint('Error adding interest point: $e');
       return 'Error adding interest point: $e';
     }
   }

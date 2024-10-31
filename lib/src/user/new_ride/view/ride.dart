@@ -367,11 +367,9 @@ Future<void> _findNearestStation() async {
     String? nearestStationId;
 
     for (var station in stations) {
-      if (station.coordinates == null) continue;
-
       LatLng stationPosition = LatLng(
-        station.coordinates!.latitude,
-        station.coordinates!.longitude
+        station.coordinates.latitude,
+        station.coordinates.longitude
       );
 
       double distanceToStation = Geolocator.distanceBetween(
@@ -488,6 +486,7 @@ void _navigateToBillInfo() {
   @override
 Widget build(BuildContext context) {
   return BasePage(
+    enableBackButton: false,
     isBottomNavBarEnabled: true,
     body: Column(
       children: [

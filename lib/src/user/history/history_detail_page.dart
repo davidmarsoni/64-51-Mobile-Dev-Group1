@@ -128,7 +128,7 @@ class _HistoryDetailPageState extends State<HistoryDetailPage> {
       DateTime? startTime = widget.history.startTime;
       DateTime? endTime = widget.history.endTime;
 
-      if (startTime != null && endTime != null) {
+      if (endTime != null) {
         usageDurationMinutes = endTime.difference(startTime).inMinutes;
         price = usageDurationMinutes * ratePerMinute;
         if (price < 5) {

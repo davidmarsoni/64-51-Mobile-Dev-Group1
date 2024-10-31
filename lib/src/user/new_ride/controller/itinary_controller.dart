@@ -162,16 +162,12 @@ class ItineraryController {
     }
   }
 
-    Future<bool> capacity(String stationId) async {
+  Future<bool> capacity(String stationId) async {
     try {
-      debugPrint("Checking capacity for station $stationId");
-
       // Create an instance of StationRepository
       StationRepository stationRepo = StationRepository();
-  
       // Get the number of available bikes
       int availableBikes = await stationRepo.countAvailableBikes(stationId);
-      debugPrint("Checking capacity for station $stationId: $availableBikes available bikes");
       // Return true if there are more than 0 available bikes
       return availableBikes > 0;
     } catch (e) {

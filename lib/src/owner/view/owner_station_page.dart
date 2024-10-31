@@ -225,8 +225,8 @@ class _OwnerStationPageState extends State<OwnerStationPage> {
     _formKey.currentState?.reset(); // Reset the form state to clear any error messages
     _nameController.text = station.name ?? '';
     _addressController.text = station.address ?? '';
-    _latitudeController.text = station.coordinates?.latitude.toString() ?? '';
-    _longitudeController.text = station.coordinates?.longitude.toString() ?? '';
+    _latitudeController.text = station.coordinates.latitude.toString();
+    _longitudeController.text = station.coordinates.longitude.toString();
     _selectedBikes = _bikes.where((bike) => station.bikeReferences.contains(bike.id)).toList();
   }
 

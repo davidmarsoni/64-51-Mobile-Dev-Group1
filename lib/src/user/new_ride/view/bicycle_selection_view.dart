@@ -160,17 +160,19 @@ class _BicycleSelectionViewState extends State<BicycleSelectionView> {
       String bikeRef = bike!.id!;
       tripRepositoryManager.startTrip(userRef, bikeRef, widget.startStationId).then((_) {
         //add the interest point if it exists to the trip
-        debugPrint('AAA :waypoints: $waypoints');
-        debugPrint('AAA :waypoints.first: ${waypoints.isNotEmpty}');
         if (waypoints.isNotEmpty) {
-          debugPrint('AAA : addInterestPoint');
           tripRepositoryManager.addInterestPoint(
             currentUser!.uid,
             GeoPoint(waypoints.first.latitude, waypoints.first.longitude),
           );
         }
       }).catchError((error) {
-        debugPrint('Error starting trip: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error starting trip: $error'),
+            duration: Duration(seconds: 3),
+          ),
+        );
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

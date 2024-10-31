@@ -1,20 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class TopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onBackButtonPressed;
   final bool showConfirmationDialog;
   final String confirmationDialogText;
+  final bool enableBackButton; // New parameter
 
   const TopBar({
-    super.key,
+    Key? key,
     this.title = 'ValaisRoll',
     this.onBackButtonPressed,
     this.showConfirmationDialog = false,
     this.confirmationDialogText = 'Do you really want to leave this page? Any unsaved changes will be lost.',
-  });
+    this.enableBackButton = true, // Default to true
+  }) : super(key: key);
 
   bool _isCurrentRoute(BuildContext context, String routeName) {
     return ModalRoute.of(context)?.settings.name == routeName;
@@ -34,7 +35,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Confim'),
+              child: const Text('Confirm'),
             ),
           ],
         ),
@@ -61,11 +62,11 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         children: [
           Image.asset('assets/png/logo.png', width: 30, height: 30),
-          const SizedBox(width: 8), // Add some space between the logo and the title
+          const SizedBox(width: 8),
           Text(title),
         ],
       ),
-      leading: canPop
+      leading: (canPop && enableBackButton)
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () => _handleBackButtonPressed(context),
@@ -89,7 +90,6 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
           icon: const Icon(Icons.notifications_outlined),
           onPressed: () {
             // Handle notifications
-            // Implement your logic here
           },
           tooltip: 'Notifications',
         ),
