@@ -72,9 +72,6 @@ class UserController {
       locality: appUser.locality,
       email: appUser.email,
     );
-
-    // Add the map for the payementMethod to the firebase
-
     await _firestore.collection('users').doc(user.uid).set(appUser.toJson());
   }
 

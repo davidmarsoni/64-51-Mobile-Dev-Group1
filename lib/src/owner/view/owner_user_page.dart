@@ -256,25 +256,33 @@ class _OwnerUserPageState extends State<OwnerUserPage> {
                                               ),
                                             ],
                                           ),
-                                          SizedBox(height: 10),
                                           Expanded(
                                             child: ClipRRect(
                                               borderRadius: BorderRadius.circular(15.0),
                                               child: GoogleMap(
                                                 initialCameraPosition: CameraPosition(
-                                                  target: LatLng(_selectedHistory!.startStationCoordinates!.latitude, _selectedHistory!.startStationCoordinates!.longitude),
+                                                  target: LatLng(
+                                                    _selectedHistory!.startStationCoordinates!.latitude,
+                                                    _selectedHistory!.startStationCoordinates!.longitude,
+                                                  ),
                                                   zoom: 14.0,
                                                 ),
                                                 markers: {
                                                   Marker(
                                                     markerId: MarkerId('start'),
-                                                    position: LatLng(_selectedHistory!.startStationCoordinates!.latitude, _selectedHistory!.startStationCoordinates!.longitude),
+                                                    position: LatLng(
+                                                      _selectedHistory!.startStationCoordinates!.latitude,
+                                                      _selectedHistory!.startStationCoordinates!.longitude,
+                                                    ),
                                                     infoWindow: InfoWindow(title: 'Start Station'),
                                                   ),
                                                   if (_selectedHistory!.endStationCoordinates != null)
                                                     Marker(
                                                       markerId: MarkerId('end'),
-                                                      position: LatLng(_selectedHistory!.endStationCoordinates!.latitude, _selectedHistory!.endStationCoordinates!.longitude),
+                                                      position: LatLng(
+                                                        _selectedHistory!.endStationCoordinates!.latitude,
+                                                        _selectedHistory!.endStationCoordinates!.longitude,
+                                                      ),
                                                       infoWindow: InfoWindow(title: 'End Station'),
                                                     ),
                                                 },
@@ -282,9 +290,15 @@ class _OwnerUserPageState extends State<OwnerUserPage> {
                                                   Polyline(
                                                     polylineId: PolylineId('route'),
                                                     points: [
-                                                      LatLng(_selectedHistory!.startStationCoordinates!.latitude, _selectedHistory!.startStationCoordinates!.longitude),
+                                                      LatLng(
+                                                        _selectedHistory!.startStationCoordinates!.latitude,
+                                                        _selectedHistory!.startStationCoordinates!.longitude,
+                                                      ),
                                                       if (_selectedHistory!.endStationCoordinates != null)
-                                                        LatLng(_selectedHistory!.endStationCoordinates!.latitude, _selectedHistory!.endStationCoordinates!.longitude),
+                                                        LatLng(
+                                                          _selectedHistory!.endStationCoordinates!.latitude,
+                                                          _selectedHistory!.endStationCoordinates!.longitude,
+                                                        ),
                                                     ],
                                                     color: Colors.blue,
                                                     width: 5,

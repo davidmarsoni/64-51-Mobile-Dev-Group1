@@ -148,7 +148,6 @@ class StationRepository {
           }
         }
       }
-
       return availableBikeCount;
     } catch (e) {
       return 0;

@@ -2,50 +2,40 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:valais_roll/src/app_routes.dart';
 import 'firebase_options.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
-import 'package:google_maps_flutter_web/google_maps_flutter_web.dart';
-import 'dart:html' if (dart.library.html) 'dart:html';
+import 'dart:html' as html;
 
 Future<void> main() async {
-  try {
-    WidgetsFlutterBinding.ensureInitialized();
-    
-    await Future.wait([
-      Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-      dotenv.load(fileName: ".env")
-    ]);
+  WidgetsFlutterBinding.ensureInitialized();
 
-    if (kIsWeb) {
-      await _initializeGoogleMapsWeb();
-      setUrlStrategy(PathUrlStrategy()); // Use path URLs instead of hash
-    }
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-    runApp(const OwnerApp());
-  } catch (e) {
-    debugPrint('Initialization error: $e');
-    rethrow;
+  if (kIsWeb) {
+    setUrlStrategy(PathUrlStrategy());
+
+    // API key
+    // This is a public key, so it's okay to include it in the source code for this project because it's restricted to the project's domain only
+    final apiKey = "AIzaSyAPTmWuDEWsoAh-U72eqplX9j1vnwazKpE";
+
+    // Dynamically insert the Google Maps script
+    final script = html.ScriptElement()
+      ..type = 'text/javascript'
+      ..src = 'https://maps.googleapis.com/maps/api/js?key=$apiKey'
+      ..async = true;
+    html.document.head!.append(script);
+
+    // Wait for the script to load
+    await script.onLoad.first;
   }
+
+  runApp(const OwnerApp());
 }
-
-Future<void> _initializeGoogleMapsWeb() async {
-  final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
-  if (apiKey == null) throw Exception('Google Maps API key not found');
-
-  // Create a new script element
-  final script = document.createElement('script') as ScriptElement;
-  script.src = 'https://maps.googleapis.com/maps/api/js?key=$apiKey';
-  
-  // Add the script to document head
-  document.head!.append(script);
-  
-  // Wait for the script to load
-  await script.onLoad.first;
-}
-
-
 
 class OwnerApp extends StatefulWidget {
   const OwnerApp({super.key});
@@ -56,18 +46,18 @@ class OwnerApp extends StatefulWidget {
 
 class _OwnerAppState extends State<OwnerApp> {
   late final FirebaseAuth _auth;
-  
+
   @override
   void initState() {
     super.initState();
     _auth = FirebaseAuth.instance;
   }
 
-  Future<bool> _checkUserAuthentication() async {
+  Future<bool> checkUserAuthentication() async {
     try {
       final user = _auth.currentUser;
       if (user == null) return false;
-      
+
       // Verify token is still valid
       await user.getIdToken();
       return true;
@@ -90,7 +80,7 @@ class _OwnerAppState extends State<OwnerApp> {
       ),
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
-      routes: AppRoutes.getOwnerRoutes(_checkUserAuthentication),
+      routes: AppRoutes.getOwnerRoutes(checkUserAuthentication),
     );
   }
 }
