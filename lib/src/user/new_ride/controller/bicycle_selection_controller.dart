@@ -135,12 +135,7 @@ class BicycleSelectionController {
     String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
  
     PolylinePoints polylinePoints = PolylinePoints();
- 
-    // Create a string of waypoints for the request
-    String waypointsStr = waypoints
-        .map((point) => "${point.latitude},${point.longitude}")
-        .join('|');
- 
+    
     // Get the route between the start, waypoints, and destination
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
       googleApiKey: apiKey,

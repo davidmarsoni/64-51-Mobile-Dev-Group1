@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:valais_roll/data/repository_manager.dart/trip_repository_manager.dart';
 import 'package:valais_roll/src/user/new_ride/controller/itinary_controller.dart';
-import 'package:valais_roll/src/user/new_ride/view/bicycle_selection_view.dart';
+import 'package:valais_roll/src/user/new_ride/view/bicycle_selection_page.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 
 class ItineraryPage extends StatefulWidget {
@@ -262,7 +260,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BicycleSelectionView(
+                        builder: (context) => BicycleSelectionPage(
                           startPoint: _startLatLng!,
                           startStationId: _startStationId,
                           destinationPoint: _destinationLatLng!,
@@ -289,14 +287,10 @@ class _ItineraryPageState extends State<ItineraryPage> {
               heroTag: "recenterButton",
               onPressed: () async {
                 LatLng? currentLocation = await _itineraryController.getPosition();
-                if (currentLocation != null) {
-                  final GoogleMapController controller = await _mapController.future;
-                  controller.animateCamera(CameraUpdate.newCameraPosition(
-                    CameraPosition(target: currentLocation, zoom: 14.0),
-                  ));
-                } else {
-                  _showErrorMessage("Unable to fetch current location.");
-                }
+                final GoogleMapController controller = await _mapController.future;
+                controller.animateCamera(CameraUpdate.newCameraPosition(
+                  CameraPosition(target: currentLocation, zoom: 14.0),
+                ));
               },
               child: Icon(Icons.my_location),
               mini: true, // Optional to make it smaller

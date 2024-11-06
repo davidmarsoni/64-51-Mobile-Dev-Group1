@@ -4,17 +4,16 @@ import 'package:geolocator/geolocator.dart';
 import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/widgets/button.dart';
-import 'package:valais_roll/src/user/new_ride/view/itinary_view.dart';
-import 'package:valais_roll/data/enums/bikeState.dart';
+import 'package:valais_roll/src/user/new_ride/view/itinary_page.dart';
 import 'package:valais_roll/data/repository/bike_repository.dart';
 
-class BillInfo extends StatelessWidget {
+class BillInfoComponent extends StatelessWidget {
   final List<LatLng> userRoute;
   final BikeRepository bikeRepository = BikeRepository(); 
   final Bike bike;
 
   // Removed 'const' from constructor
-  BillInfo({Key? key, required this.userRoute, required this.bike}) : super(key: key);
+  BillInfoComponent({Key? key, required this.userRoute, required this.bike}) : super(key: key);
 
   void _showFeedbackDialog(BuildContext context) {
     showDialog(
@@ -37,7 +36,7 @@ class BillInfo extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 onTap: () async {
-                  String resultMessage = await bikeRepository.setBikeStatusAvailable(bike.id!);
+                  await bikeRepository.setBikeStatusAvailable(bike.id!);
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -57,7 +56,7 @@ class BillInfo extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 onTap: () async {
-                  String resultMessage = await bikeRepository.setBikeStatusMaintenance(bike.id!);
+                  await bikeRepository.setBikeStatusMaintenance(bike.id!);
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -77,7 +76,7 @@ class BillInfo extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 onTap: () async {
-                  String resultMessage = await bikeRepository.setBikeStatusLost(bike.id!);
+                  await bikeRepository.setBikeStatusLost(bike.id!);
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

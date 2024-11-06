@@ -146,6 +146,7 @@ class HistoryRepository {
       return [];
     }
   }
+  
   Future<String?> getLastHistory(String userRef) async {
     try {
       // First, check for histories where endTime is null

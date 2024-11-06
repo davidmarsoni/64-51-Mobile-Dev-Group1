@@ -9,8 +9,8 @@ import 'package:valais_roll/data/objects/bike.dart';
 import 'package:valais_roll/data/repository/station_repository.dart';
 import 'package:valais_roll/data/repository_manager.dart/trip_repository_manager.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
-import 'package:valais_roll/src/user/new_ride/view/billinfo.dart';
-import 'package:valais_roll/src/user/new_ride/view/payment.dart';
+import 'package:valais_roll/src/user/new_ride/view/billinfo_component.dart';
+import 'package:valais_roll/src/user/new_ride/view/payment_component.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore
 
@@ -22,7 +22,7 @@ class Ride extends StatefulWidget {
   final String destinationName;
   final List<LatLng> waypoints; 
   final Bike bike;
-  String nearestStationId = ''; // Store the nearest station ID
+  final String nearestStationId = ''; // Store the nearest station ID
 
   Ride({
     super.key,
@@ -431,7 +431,7 @@ Future<void> _getPaymentMethod() async {
     String? paymentMethod = snapshot.get('payment_data.payment_method');
 
     if (paymentMethod != null) {
-      Payment.show(context, paymentMethod: paymentMethod);
+      PaymentComponent.show(context, paymentMethod: paymentMethod);
     } else {
       _showErrorMessage('No payment method found');
     }
@@ -445,7 +445,7 @@ void _navigateToBillInfo() {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => BillInfo(
+      builder: (context) => BillInfoComponent(
         userRoute: _userPositions,
         bike: widget.bike, // Pass the bike with its ID
       ),

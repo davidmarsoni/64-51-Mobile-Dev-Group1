@@ -1,26 +1,25 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:valais_roll/src/user/new_ride/view/billinfo.dart';
 
-class Payment extends StatefulWidget {
+class PaymentComponent extends StatefulWidget {
   final String paymentMethod;
 
-  const Payment({super.key, required this.paymentMethod});
+  const PaymentComponent({super.key, required this.paymentMethod});
 
   @override
-  State<Payment> createState() => _PaymentState();
+  State<PaymentComponent> createState() => _PaymentState();
 
   // Add the static show method here
   static void show(BuildContext context, {required String paymentMethod}) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => Payment(paymentMethod: paymentMethod),
+        builder: (context) => PaymentComponent(paymentMethod: paymentMethod),
       ),
     );
   }
 }
 
-class _PaymentState extends State<Payment> {
+class _PaymentState extends State<PaymentComponent> {
   late Color backgroundColor;
   late String message;
 

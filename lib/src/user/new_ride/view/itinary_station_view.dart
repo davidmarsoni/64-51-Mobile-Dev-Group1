@@ -6,21 +6,21 @@ import 'package:valais_roll/src/user/new_ride/controller/itinary_controller.dart
 import 'package:valais_roll/src/user/widgets/base_page.dart';
 import 'package:valais_roll/src/user/new_ride/controller/bicycle_selection_controller.dart';
 
-class ItineraryStationView extends StatefulWidget {
+class ItineraryStationPage extends StatefulWidget {
   final String stationName;
   final LatLng stationPosition;
 
-  const ItineraryStationView({
+  const ItineraryStationPage({
     super.key,
     required this.stationName,
     required this.stationPosition,
   });
 
   @override
-  State<ItineraryStationView> createState() => _ItineraryStationViewState();
+  State<ItineraryStationPage> createState() => _ItineraryStationPageState();
 }
 
-class _ItineraryStationViewState extends State<ItineraryStationView> {
+class _ItineraryStationPageState extends State<ItineraryStationPage> {
   final Completer<GoogleMapController> _mapController = Completer();
   final ItineraryController _itineraryController = ItineraryController();
   StreamSubscription<Position>? _positionStreamSubscription;  // Stream subscription for location updates
@@ -58,17 +58,13 @@ class _ItineraryStationViewState extends State<ItineraryStationView> {
     await _itineraryController.getUserLocation(); // Ensure user location is fetched first
     LatLng? userLocation = await _itineraryController.getPosition();
 
-    if (userLocation != null) {
-      setState(() {
-        _currentPosition = userLocation;
-        _initialPosition = CameraPosition(target: userLocation, zoom: 14.0);
-      });
+    setState(() {
+      _currentPosition = userLocation;
+      _initialPosition = CameraPosition(target: userLocation, zoom: 14.0);
+    });
 
-      _startItinerary();
-      _checkArrival();
-    } else {
-      _showErrorMessage("Unable to fetch current location.");
-    }
+    _startItinerary();
+    _checkArrival();
   }
 
   // Start listening to location updates
@@ -255,14 +251,10 @@ class _ItineraryStationViewState extends State<ItineraryStationView> {
               heroTag: "recenterButton",
               onPressed: () async {
                 LatLng? currentLocation = await _itineraryController.getPosition();
-                if (currentLocation != null) {
-                  final GoogleMapController controller = await _mapController.future;
-                  controller.animateCamera(CameraUpdate.newCameraPosition(
-                    CameraPosition(target: currentLocation, zoom: 14.0),
-                  ));
-                } else {
-                  _showErrorMessage("Unable to fetch current location.");
-                }
+                final GoogleMapController controller = await _mapController.future;
+                controller.animateCamera(CameraUpdate.newCameraPosition(
+                  CameraPosition(target: currentLocation, zoom: 14.0),
+                ));
               },
               child: Icon(Icons.my_location),
               mini: true, // Optional to make it smaller
