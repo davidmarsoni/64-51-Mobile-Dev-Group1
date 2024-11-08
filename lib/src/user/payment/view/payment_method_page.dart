@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:valais_roll/data/enums/payement_data.dart';
+import 'package:valais_roll/data/enums/payement_method.dart';
 import 'package:valais_roll/data/objects/payement_data.dart';
 import 'package:valais_roll/data/objects/payment_method_extension.dart';
 import 'package:valais_roll/src/user/widgets/base_page.dart';

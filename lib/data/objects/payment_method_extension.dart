@@ -1,4 +1,4 @@
-import 'package:valais_roll/data/enums/payement_data.dart';
+import 'package:valais_roll/data/enums/payement_method.dart';
 
 extension PaymentMethodExtension on PaymentMethod {
   String get name {

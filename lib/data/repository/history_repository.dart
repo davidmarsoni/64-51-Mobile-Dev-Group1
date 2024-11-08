@@ -1,14 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:valais_roll/data/objects/app_user.dart';
 import 'package:valais_roll/data/objects/history.dart';
 import 'package:valais_roll/data/objects/Station.dart';
+
+import 'package:valais_roll/data/objects/bike.dart';
+import 'package:valais_roll/data/repository/app_user_repository.dart';
 import 'package:valais_roll/data/repository/station_repository.dart';
+
+import 'package:valais_roll/data/repository/bike_repository.dart';
 
 class HistoryRepository {
   final CollectionReference _historyCollection = FirebaseFirestore.instance.collection('history');
-  final CollectionReference _userCollection = FirebaseFirestore.instance.collection('users');
-  final CollectionReference _bikeCollection = FirebaseFirestore.instance.collection('bikes');
   final StationRepository _stationRepository = StationRepository();
+  final AppUserRepository _userRepository = AppUserRepository();
+  final BikeRepository _bikeRepository = BikeRepository();
 
   Future<String> createHistory(String startStationRef, String bikeRef, String userRef) async {
     try {
@@ -30,7 +36,9 @@ class HistoryRepository {
   Future<String> addInterestPoint(String historyId, GeoPoint interestPoint) async {
     try {
       await _historyCollection.doc(historyId).update({
-        'interestPoints': FieldValue.arrayUnion([{'latitude': interestPoint.latitude, 'longitude': interestPoint.longitude}])
+        'interestPoints': FieldValue.arrayUnion([
+          {'latitude': interestPoint.latitude, 'longitude': interestPoint.longitude}
+        ])
       });
       debugPrint('Interest point added to history ID: $historyId');
       return 'Interest point added successfully';
@@ -67,7 +75,7 @@ class HistoryRepository {
     return null;
   }
 
-   Future<List<History>> getHistoryByUser(String userRef) async {
+  Future<List<History>> getHistoryByUser(String userRef) async {
     try {
       QuerySnapshot querySnapshot = await _historyCollection.where('userRef', isEqualTo: userRef).get();
       List<History> histories = await Future.wait(querySnapshot.docs.map((doc) async {
@@ -91,10 +99,10 @@ class HistoryRepository {
           }
         }
 
-        // Fetch related bike name
-        DocumentSnapshot bikeDoc = await _bikeCollection.doc(history.bikeRef).get();
-        if (bikeDoc.exists) {
-          history.bikeName = bikeDoc['name'];
+        // Fetch related bike name using BikeRepository
+        Bike? bike = await _bikeRepository.getBikeById(history.bikeRef);
+        if (bike != null) {
+          history.bikeName = bike.name;
         }
 
         debugPrint('History fetched for user: $userRef, History ID: ${history.id}');
@@ -108,7 +116,7 @@ class HistoryRepository {
     }
   }
 
- Future<List<History>> getHistoryByBike(String bikeRef) async {
+  Future<List<History>> getHistoryByBike(String bikeRef) async {
     try {
       QuerySnapshot querySnapshot = await _historyCollection.where('bikeRef', isEqualTo: bikeRef).get();
       List<History> histories = await Future.wait(querySnapshot.docs.map((doc) async {
@@ -116,10 +124,10 @@ class HistoryRepository {
         data['id'] = doc.id;
         History history = History.fromJson(data);
 
-        // Fetch related user name
-        DocumentSnapshot userDoc = await _userCollection.doc(history.userRef).get();
-        if (userDoc.exists) {
-          history.userName = userDoc['name'];
+        // Fetch related user name using UserRepository
+        AppUser? user = await _userRepository.getUserById(history.userRef);
+        if (user != null) {
+          history.userName = user.name;
         }
 
         // Fetch related start station name
@@ -146,7 +154,7 @@ class HistoryRepository {
       return [];
     }
   }
-  
+
   Future<String?> getLastHistory(String userRef) async {
     try {
       // First, check for histories where endTime is null
@@ -169,7 +177,7 @@ class HistoryRepository {
           .orderBy('startTime', descending: true)
           .limit(1)
           .get();
-      
+
       if (querySnapshot.docs.isNotEmpty) {
         debugPrint('Last history with interestPoint not null found for user: $userRef');
         return querySnapshot.docs.first.id;
